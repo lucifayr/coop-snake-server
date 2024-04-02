@@ -1,4 +1,4 @@
-# coop-snake server
+# coop-snake server 🐍
 
 ## Build and Run
 

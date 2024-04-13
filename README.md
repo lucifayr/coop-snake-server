@@ -3,6 +3,6 @@
 ## Build and Run
 
 ```sh
-mvn package
-java -cp target/coopsnakeserver-0.1.0.jar com.coopsnakeserver.app.app
+./mvnw package
+java -jar target/coopsnakeserver-0.1.0.jar
 ```

@@ -22,7 +22,7 @@ public class BinaryMessageTest {
         var inputData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
         var inputType = MessageType.SnakePosition;
 
-        var output = BinaryMessage.withData(inputData, inputType);
+        var output = new BinaryMessage(inputType, inputData).intoBytes();
         assertEquals(BinaryMessage.MESSAGE_VERSION, output[0]);
 
         var expectedLen = BinaryMessage.MESSAGE_HEADER_WIDTH_VERSION + BinaryMessage.MESSAGE_HEADER_WIDTH_TYPE
@@ -45,7 +45,7 @@ public class BinaryMessageTest {
                 // Data
                 127, 0, 0, 1, 42, 65, 10, 24 };
 
-        var output = BinaryMessage.fromRawBytes(input);
+        var output = BinaryMessage.fromBytes(input);
         assertEquals(1, output.getType().tag());
 
         var expectedData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
@@ -64,9 +64,9 @@ public class BinaryMessageTest {
 
             var inputData = new byte[ThreadLocalRandom.current().nextInt(0, 255)];
             ThreadLocalRandom.current().nextBytes(inputData);
-            var msg = BinaryMessage.withData(inputData, inputType);
+            var msg = new BinaryMessage(inputType, inputData).intoBytes();
 
-            var output = BinaryMessage.fromRawBytes(msg);
+            var output = BinaryMessage.fromBytes(msg);
 
             assertEquals(inputType, output.getType());
             assertArrayEquals(inputData, output.getData());

@@ -12,7 +12,7 @@ import java.util.Arrays;
  * @author June L. Gshwantner
  */
 public class BinaryUtils {
-    public static byte[] concatBytes(byte[]... byteArrays) {
+    public static byte[] concat(byte[]... byteArrays) {
         var countAllBytes = 0;
         for (var bytes : byteArrays) {
             countAllBytes += bytes.length;
@@ -26,6 +26,11 @@ public class BinaryUtils {
         return buffer.array();
     }
 
+    /**
+     * Convert an unsigned int 32 to a 4 byte slice (big endian).
+     *
+     * @param value Unsigned integer to convert to byte slice.
+     */
     public static byte[] int32ToBytes(int value) {
         assert (value >= 0) : "integer must be greater 0. Recevied value " + value;
 
@@ -38,6 +43,13 @@ public class BinaryUtils {
         return bytes;
     }
 
+    /**
+     * Convert an byte slice of length 4 to an integer. Byte slice is read
+     * as big endian.
+     *
+     * @param value Byte slice to convert to an integer. Must be exactly 4 bytes
+     *              long.
+     */
     public static int bytesToInt32(byte[] value) {
         assert (value.length == 4)
                 : "length of byte array should always be 4. Received byte array " + Arrays.toString(value);

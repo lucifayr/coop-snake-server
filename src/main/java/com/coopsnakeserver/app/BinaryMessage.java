@@ -28,7 +28,7 @@ public class BinaryMessage {
     private final byte[] data;
     private final MessageType type;
 
-    private BinaryMessage(MessageType type, byte[] data) {
+    public BinaryMessage(MessageType type, byte[] data) {
         this.data = data;
         this.type = type;
     }
@@ -48,12 +48,12 @@ public class BinaryMessage {
      *             could be snake position data.
      * @return
      */
-    public static byte[] withData(byte[] data, MessageType type) {
+    public byte[] intoBytes() {
         var msgVersion = new byte[] { MESSAGE_VERSION };
-        var dataLength = BinaryUtils.int32ToBytes(data.length);
-        var msgType = type.tagBytes();
+        var dataLength = BinaryUtils.int32ToBytes(this.data.length);
+        var msgType = this.type.tagBytes();
 
-        return BinaryUtils.concatBytes(msgVersion, msgType, dataLength, data);
+        return BinaryUtils.concat(msgVersion, msgType, dataLength, this.data);
     }
 
     /**
@@ -65,7 +65,7 @@ public class BinaryMessage {
      *
      * @param msg The binary sequence to parse.
      */
-    public static BinaryMessage fromRawBytes(byte[] msg) {
+    public static BinaryMessage fromBytes(byte[] msg) {
         var version = msg[0];
         assert (version == MESSAGE_VERSION)
                 : String.format("Version mismatch. Expected %d. Received %d.", MESSAGE_VERSION, version);

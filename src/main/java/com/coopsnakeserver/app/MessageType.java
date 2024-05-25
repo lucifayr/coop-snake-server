@@ -39,4 +39,9 @@ public enum MessageType {
     public byte[] tagBytes() {
         return BinaryUtils.int32ToBytes(this.tag);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s (tag = %d) ", this.name(), this.tag);
+    }
 }

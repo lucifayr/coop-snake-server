@@ -3,7 +3,7 @@ package com.coopsnakeserver.app;
 import java.util.Arrays;
 
 /**
- * BinaryMessage
+ * GameBinaryMessage
  *
  * Class to parse the basic structure of a binary message sent over a websocket.
  *
@@ -19,7 +19,7 @@ import java.util.Arrays;
  *
  * @author June L. Gschwantner
  */
-public class BinaryMessage {
+public class GameBinaryMessage {
     public static final byte MESSAGE_VERSION = 1;
     public static final int MESSAGE_HEADER_WIDTH_VERSION = 1;
     public static final int MESSAGE_HEADER_WIDTH_TYPE = 4;
@@ -28,7 +28,7 @@ public class BinaryMessage {
     private final byte[] data;
     private final MessageType type;
 
-    public BinaryMessage(MessageType type, byte[] data) {
+    public GameBinaryMessage(MessageType type, byte[] data) {
         this.data = data;
         this.type = type;
     }
@@ -65,19 +65,19 @@ public class BinaryMessage {
      *
      * @param msg The binary sequence to parse.
      */
-    public static BinaryMessage fromBytes(byte[] msg) {
+    public static GameBinaryMessage fromBytes(byte[] msg) {
         var version = msg[0];
-        assert (version == MESSAGE_VERSION)
-                : String.format("Version mismatch. Expected %d. Received %d.", MESSAGE_VERSION, version);
+        DevUtils.assertion(version == MESSAGE_VERSION,
+                String.format("Version mismatch. Expected %d. Received %d.", MESSAGE_VERSION, version));
 
         var typeStartIdx = 1;
         var typeEndIdx = typeStartIdx + MESSAGE_HEADER_WIDTH_TYPE;
         var typeBytes = Arrays.copyOfRange(msg, typeStartIdx, typeEndIdx);
         var typeTag = BinaryUtils.bytesToInt32(typeBytes);
         var type = MessageType.fromTag(typeTag);
-        assert (type.isPresent())
-                : String.format("Invalid message type received. Received %d. Valid types are %s", typeTag,
-                        Arrays.toString(MessageType.values()));
+        DevUtils.assertion(type.isPresent(),
+                String.format("Invalid message type received. Received %d. Valid types are %s", typeTag,
+                        Arrays.toString(MessageType.values())));
 
         var lenStartIdx = typeEndIdx;
         var lenEndIdx = lenStartIdx + MESSAGE_HEADER_WIDTH_DATA_LENGTH;
@@ -86,12 +86,12 @@ public class BinaryMessage {
 
         var dataStartIdx = lenEndIdx;
         var dataEndIdx = dataStartIdx + dataLength;
-        assert (msg.length >= dataEndIdx) : String.format(
-                "Message is too short. Expected minium length %d but only got length %d", dataEndIdx, msg.length);
+        DevUtils.assertion(msg.length >= dataEndIdx, String.format(
+                "Message is too short. Expected minium length %d but only got length %d", dataEndIdx, msg.length));
 
         var data = Arrays.copyOfRange(msg, dataStartIdx, dataEndIdx);
 
-        return new BinaryMessage(type.get(), data);
+        return new GameBinaryMessage(type.get(), data);
     }
 
     public byte[] getData() {
@@ -100,6 +100,19 @@ public class BinaryMessage {
 
     public MessageType getType() {
         return type;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("""
+                VERSION:        %d
+                MESSAGE TYPE:   %s
+                DATA LENGTH:    %d
+                DATA:   %s""",
+                MESSAGE_VERSION,
+                this.type,
+                this.data.length,
+                Arrays.toString(this.data));
     }
 
 }

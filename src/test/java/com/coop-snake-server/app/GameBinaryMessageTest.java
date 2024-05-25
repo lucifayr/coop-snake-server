@@ -1,7 +1,7 @@
 package com.coopsnakeserver.app;
 
 import com.coopsnakeserver.app.MessageType;
-import com.coopsnakeserver.app.BinaryMessage;
+import com.coopsnakeserver.app.GameBinaryMessage;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -16,17 +16,17 @@ import org.junit.Test;
  *
  * @author June L. Gschwantner
  */
-public class BinaryMessageTest {
+public class GameBinaryMessageTest {
     @Test
     public void shouldConstructTheCorrectMessage() {
         var inputData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
         var inputType = MessageType.SnakePosition;
 
-        var output = new BinaryMessage(inputType, inputData).intoBytes();
-        assertEquals(BinaryMessage.MESSAGE_VERSION, output[0]);
+        var output = new GameBinaryMessage(inputType, inputData).intoBytes();
+        assertEquals(GameBinaryMessage.MESSAGE_VERSION, output[0]);
 
-        var expectedLen = BinaryMessage.MESSAGE_HEADER_WIDTH_VERSION + BinaryMessage.MESSAGE_HEADER_WIDTH_TYPE
-                + BinaryMessage.MESSAGE_HEADER_WIDTH_DATA_LENGTH + inputData.length;
+        var expectedLen = GameBinaryMessage.MESSAGE_HEADER_WIDTH_VERSION + GameBinaryMessage.MESSAGE_HEADER_WIDTH_TYPE
+                + GameBinaryMessage.MESSAGE_HEADER_WIDTH_DATA_LENGTH + inputData.length;
         assertEquals(expectedLen, output.length);
 
         var expectedLastBtye = 24;
@@ -37,7 +37,7 @@ public class BinaryMessageTest {
     public void shouldParseAMessageCorrectly() {
         var input = new byte[] {
                 // Version
-                BinaryMessage.MESSAGE_VERSION,
+                GameBinaryMessage.MESSAGE_VERSION,
                 // Tag
                 0, 0, 0, 1,
                 // Data length
@@ -45,7 +45,7 @@ public class BinaryMessageTest {
                 // Data
                 127, 0, 0, 1, 42, 65, 10, 24 };
 
-        var output = BinaryMessage.fromBytes(input);
+        var output = GameBinaryMessage.fromBytes(input);
         assertEquals(1, output.getType().tag());
 
         var expectedData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
@@ -64,9 +64,9 @@ public class BinaryMessageTest {
 
             var inputData = new byte[ThreadLocalRandom.current().nextInt(0, 255)];
             ThreadLocalRandom.current().nextBytes(inputData);
-            var msg = new BinaryMessage(inputType, inputData).intoBytes();
+            var msg = new GameBinaryMessage(inputType, inputData).intoBytes();
 
-            var output = BinaryMessage.fromBytes(msg);
+            var output = GameBinaryMessage.fromBytes(msg);
 
             assertEquals(inputType, output.getType());
             assertArrayEquals(inputData, output.getData());

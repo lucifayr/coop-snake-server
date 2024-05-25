@@ -26,7 +26,7 @@ public class BinaryUtilsTest {
         assertEquals(12397123, BinaryUtils.bytesToInt32(case2));
 
         var case3 = new byte[] { 1, 2, 3, 4, 5 };
-        assertThrows(AssertionError.class, () -> BinaryUtils.bytesToInt32(case3));
+        assertThrows(RuntimeException.class, () -> BinaryUtils.bytesToInt32(case3));
     }
 
     @Test

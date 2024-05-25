@@ -32,7 +32,7 @@ public class BinaryUtils {
      * @param value Unsigned integer to convert to byte slice.
      */
     public static byte[] int32ToBytes(int value) {
-        assert (value >= 0) : "integer must be greater 0. Recevied value " + value;
+        DevUtils.assertion(value >= 0, "integer must be greater 0. Recevied value " + value);
 
         var bytes = ByteBuffer
                 .allocate(Integer.BYTES)
@@ -51,8 +51,8 @@ public class BinaryUtils {
      *              long.
      */
     public static int bytesToInt32(byte[] value) {
-        assert (value.length == 4)
-                : "length of byte array should always be 4. Received byte array " + Arrays.toString(value);
+        DevUtils.assertion(value.length == 4,
+                "length of byte array should always be 4. Received byte array " + Arrays.toString(value));
 
         var int32 = ByteBuffer
                 .wrap(value)

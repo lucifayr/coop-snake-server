@@ -26,9 +26,9 @@ public class GameBinaryMessage {
     public static final int MESSAGE_HEADER_WIDTH_DATA_LENGTH = 4;
 
     private final byte[] data;
-    private final MessageType type;
+    private final GameMessageType type;
 
-    public GameBinaryMessage(MessageType type, byte[] data) {
+    public GameBinaryMessage(GameMessageType type, byte[] data) {
         this.data = data;
         this.type = type;
     }
@@ -74,10 +74,10 @@ public class GameBinaryMessage {
         var typeEndIdx = typeStartIdx + MESSAGE_HEADER_WIDTH_TYPE;
         var typeBytes = Arrays.copyOfRange(msg, typeStartIdx, typeEndIdx);
         var typeTag = BinaryUtils.bytesToInt32(typeBytes);
-        var type = MessageType.fromTag(typeTag);
+        var type = GameMessageType.fromTag(typeTag);
         DevUtils.assertion(type.isPresent(),
                 String.format("Invalid message type received. Received %d. Valid types are %s", typeTag,
-                        Arrays.toString(MessageType.values())));
+                        Arrays.toString(GameMessageType.values())));
 
         var lenStartIdx = typeEndIdx;
         var lenEndIdx = lenStartIdx + MESSAGE_HEADER_WIDTH_DATA_LENGTH;
@@ -98,7 +98,7 @@ public class GameBinaryMessage {
         return data;
     }
 
-    public MessageType getType() {
+    public GameMessageType getType() {
         return type;
     }
 

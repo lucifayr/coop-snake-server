@@ -1,6 +1,6 @@
 package com.coopsnakeserver.app;
 
-import com.coopsnakeserver.app.MessageType;
+import com.coopsnakeserver.app.GameMessageType;
 import com.coopsnakeserver.app.GameBinaryMessage;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -20,7 +20,7 @@ public class GameBinaryMessageTest {
     @Test
     public void shouldConstructTheCorrectMessage() {
         var inputData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
-        var inputType = MessageType.SnakePosition;
+        var inputType = GameMessageType.SnakePosition;
 
         var output = new GameBinaryMessage(inputType, inputData).intoBytes();
         assertEquals(GameBinaryMessage.MESSAGE_VERSION, output[0]);
@@ -60,7 +60,7 @@ public class GameBinaryMessageTest {
         for (int i = 0; i < iterations; i++) {
 
             // fails if no type exists with the binary tag 0 and 1
-            var inputType = MessageType.fromTag(i % 2).get();
+            var inputType = GameMessageType.fromTag(i % 2).get();
 
             var inputData = new byte[ThreadLocalRandom.current().nextInt(0, 255)];
             ThreadLocalRandom.current().nextBytes(inputData);

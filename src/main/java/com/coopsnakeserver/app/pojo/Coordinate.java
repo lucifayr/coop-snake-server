@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app.pojo;
 
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.IntoBytes;
 
 /**
@@ -15,6 +16,9 @@ public class Coordinate implements IntoBytes {
     private int y;
 
     public Coordinate(int x, int y) {
+        DevUtils.assertion(x >= 0, String.format("Expected x coordiante to be 0 or greater. Received x = %d", x));
+        DevUtils.assertion(y >= 0, String.format("Expected y coordiante to be 0 or greater. Received y = %d", y));
+
         this.x = x;
         this.y = y;
     }

@@ -84,7 +84,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         }
 
         var playerCoords = new PlayerCoordiantes(player, coords);
-        System.out.println(playerCoords);
         var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoords.intoBytes());
         return new BinaryMessage(placeholderGameState.intoBytes());
     }

@@ -16,6 +16,8 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.GameMessageType;
+import com.coopsnakeserver.app.pojo.Player;
+import com.coopsnakeserver.app.pojo.PlayerCoordiante;
 
 /**
  *
@@ -26,6 +28,9 @@ import com.coopsnakeserver.app.GameMessageType;
 public class GameSessionSocket extends BinaryWebSocketHandler {
     public static int FPS = 30;
     public static long TICK_RATE_MILLIS = 1_000 / FPS;
+
+    public static int GAME_BOARD_WIDTH = 40;
+    public static int GAME_BOARD_HEIGHT = 40;
 
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
     HashMap<String, ScheduledFuture<?>> connections = new HashMap<>();
@@ -68,10 +73,14 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     }
 
     private static BinaryMessage placeholderData() {
-        var randBytes = new byte[ThreadLocalRandom.current().nextInt(0, 255)];
-        ThreadLocalRandom.current().nextBytes(randBytes);
+        var randX = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_WIDTH);
+        var randY = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_HEIGHT);
 
-        var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, randBytes);
+        var playerCoord = new PlayerCoordiante(Player.Player1, randX, randY);
+        System.out.println(playerCoord);
+        System.out.println(Arrays.toString(playerCoord.intoBytes()));
+
+        var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoord.intoBytes());
         return new BinaryMessage(placeholderGameState.intoBytes());
     }
 }

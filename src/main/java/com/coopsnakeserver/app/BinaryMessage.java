@@ -10,9 +10,9 @@ import java.util.Arrays;
  * Does not handle serializing/deserializing the {@code}data field{@code}.
  *
  * <pre>
- * |------------------|------------------------|--------------------------|---------------------------- |
- * | version (1 byte) | message type (4 bytes) | data length (4 bytes) | data (message length bytes) |
- * |------------------|------------------------|--------------------------|---------------------------- |
+ * |------------------|------------------------|-----------------------|------------------------- |
+ * | version (1 byte) | message type (4 bytes) | data length (4 bytes) | data (data length bytes) |
+ * |------------------|------------------------|-----------------------|------------------------- |
  * </pre>
  *
  * created: 21.05.2024

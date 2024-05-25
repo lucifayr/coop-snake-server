@@ -9,7 +9,7 @@ import java.util.Optional;
  *
  * @author June L. Gshwantner
  */
-public enum GameMessageType {
+public enum GameMessageType implements IntoBytes {
     SnakePosition(0),
     PlayerInput(1);
 
@@ -32,12 +32,13 @@ public enum GameMessageType {
         }
     }
 
-    public int tag() {
-        return this.tag;
+    @Override
+    public byte[] intoBytes() {
+        return BinaryUtils.int32ToBytes(this.tag);
     }
 
-    public byte[] tagBytes() {
-        return BinaryUtils.int32ToBytes(this.tag);
+    public int tag() {
+        return this.tag;
     }
 
     @Override

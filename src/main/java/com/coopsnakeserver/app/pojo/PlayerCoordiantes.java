@@ -21,11 +21,10 @@ public class PlayerCoordiantes implements IntoBytes {
         this.coordinates = coordinates;
     }
 
+    @Override
     public byte[] intoBytes() {
-        var playerBytes = new byte[] { this.player.id() };
         var coordinatesBytes = BinaryUtils.iteratorToBytes(this.coordinates);
-
-        return BinaryUtils.concat(playerBytes, coordinatesBytes);
+        return BinaryUtils.concat(this.player.intoBytes(), coordinatesBytes);
     }
 
     @Override

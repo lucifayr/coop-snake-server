@@ -23,6 +23,7 @@ public class Coordinate implements IntoBytes {
         this.y = y;
     }
 
+    @Override
     public byte[] intoBytes() {
         var xBytes = BinaryUtils.int32ToBytes(this.x);
         var yBytes = BinaryUtils.int32ToBytes(this.y);

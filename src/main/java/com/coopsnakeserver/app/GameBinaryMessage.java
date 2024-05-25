@@ -48,10 +48,11 @@ public class GameBinaryMessage implements IntoBytes {
      *             could be snake position data.
      * @return
      */
+    @Override
     public byte[] intoBytes() {
         var msgVersion = new byte[] { MESSAGE_VERSION };
         var dataLength = BinaryUtils.int32ToBytes(this.data.length);
-        var msgType = this.type.tagBytes();
+        var msgType = this.type.intoBytes();
 
         return BinaryUtils.concat(msgVersion, msgType, dataLength, this.data);
     }

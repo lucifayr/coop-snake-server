@@ -1,12 +1,14 @@
 package com.coopsnakeserver.app.pojo;
 
+import com.coopsnakeserver.app.IntoBytes;
+
 /**
  *
  * created: 13.04.2024
  *
  * @author June L. Gschwantner
  */
-public enum Player {
+public enum Player implements IntoBytes {
     Player1((byte) 1),
     Player2((byte) 2);
 
@@ -16,8 +18,9 @@ public enum Player {
         this.id = id;
     }
 
-    public byte id() {
-        return this.id;
+    @Override
+    public byte[] intoBytes() {
+        return new byte[] { this.id };
     }
 
     @Override

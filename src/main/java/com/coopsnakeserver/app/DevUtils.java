@@ -1,7 +1,5 @@
 package com.coopsnakeserver.app;
 
-import java.util.Collection;
-
 /**
  * Utils
  *

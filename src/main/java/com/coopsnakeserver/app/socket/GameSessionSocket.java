@@ -16,6 +16,8 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.GameMessageType;
+import com.coopsnakeserver.app.debug.DebugData;
+import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.PlayerCoordiantes;
@@ -42,7 +44,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         var future = executor.scheduleWithFixedDelay(() -> {
             try {
                 session.sendMessage(placeholderData(Player.Player1));
-                session.sendMessage(placeholderData(Player.Player2));
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
@@ -75,7 +76,18 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     }
 
     private static BinaryMessage placeholderData(Player player) {
+        var coords = randomCoords();
+        if (DebugData.instanceHasFlag(DebugFlag.PlayerCoordinateDataFromFile)) {
+            coords = DebugData.instance().nextDebugCoords().orElseGet(() -> new Coordinate[0]);
+        }
 
+        var playerCoords = new PlayerCoordiantes(player, coords);
+        System.out.println(playerCoords);
+        var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoords.intoBytes());
+        return new BinaryMessage(placeholderGameState.intoBytes());
+    }
+
+    private static Coordinate[] randomCoords() {
         var coords = new Coordinate[ThreadLocalRandom.current().nextInt(0, 40)];
         for (int i = 0; i < coords.length; i++) {
             var randX = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_WIDTH);
@@ -83,8 +95,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
             coords[i] = new Coordinate(randX, randY);
         }
 
-        var playerCoords = new PlayerCoordiantes(player, coords);
-        var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoords.intoBytes());
-        return new BinaryMessage(placeholderGameState.intoBytes());
+        return coords;
     }
 }

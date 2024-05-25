@@ -33,6 +33,6 @@ public class Coordinate implements IntoBytes {
 
     @Override
     public String toString() {
-        return String.format("X: %d, Y: %d", this.x, this.y);
+        return String.format("X: %02d, Y: %02d", this.x, this.y);
     }
 }

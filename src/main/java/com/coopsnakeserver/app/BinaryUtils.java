@@ -2,6 +2,7 @@ package com.coopsnakeserver.app;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -12,6 +13,26 @@ import java.util.Arrays;
  * @author June L. Gshwantner
  */
 public class BinaryUtils {
+    public static byte[] concat(Iterable<byte[]> byteArrays) {
+        var countAllBytes = 0;
+        for (var bytes : byteArrays) {
+            countAllBytes += bytes.length;
+        }
+
+        var buffer = ByteBuffer.allocate(countAllBytes).order(ByteOrder.BIG_ENDIAN);
+        for (var bytes : byteArrays) {
+            buffer.put(bytes);
+        }
+
+        return buffer.array();
+    }
+
+    // Duplicated to make the API more comfortable to use.
+    //
+    // i.e. Allows calling
+    // concat(bytes1, bytes2, bytes3);
+    // instead of
+    // concat(new byte[] {bytes1, bytes2, bytes3});
     public static byte[] concat(byte[]... byteArrays) {
         var countAllBytes = 0;
         for (var bytes : byteArrays) {
@@ -24,6 +45,15 @@ public class BinaryUtils {
         }
 
         return buffer.array();
+    }
+
+    public static byte[] iteratorToBytes(IntoBytes[] iterable) {
+        var byteArrays = new ArrayList<byte[]>(iterable.length);
+        for (var element : iterable) {
+            byteArrays.add(element.intoBytes());
+        }
+
+        return concat(byteArrays);
     }
 
     /**

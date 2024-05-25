@@ -19,7 +19,7 @@ import java.util.Arrays;
  *
  * @author June L. Gschwantner
  */
-public class GameBinaryMessage {
+public class GameBinaryMessage implements IntoBytes {
     public static final byte MESSAGE_VERSION = 1;
     public static final int MESSAGE_HEADER_WIDTH_VERSION = 1;
     public static final int MESSAGE_HEADER_WIDTH_TYPE = 4;

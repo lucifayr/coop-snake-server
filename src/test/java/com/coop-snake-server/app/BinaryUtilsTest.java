@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app;
 
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.pojo.Coordinate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
@@ -49,5 +50,23 @@ public class BinaryUtilsTest {
             var output = BinaryUtils.int32ToBytes(input);
             assertEquals(input, BinaryUtils.bytesToInt32(output));
         }
+    }
+
+    @Test
+    public void shouldConvertIteratorToBytesCoorrectly() {
+        var cord1 = new Coordinate(10, 11);
+        var cord2 = new Coordinate(120, 80);
+        var cord3 = new Coordinate(23, 84);
+        var cord1Bytes = cord1.intoBytes();
+        var cord2Bytes = cord2.intoBytes();
+        var cord3Bytes = cord3.intoBytes();
+
+        var input = new Coordinate[] { cord1, cord2, cord3 };
+
+        assertArrayEquals(new byte[] {
+                0, 0, 0, 10,
+                0, 0, 0, 11
+        }, cord1Bytes);
+        assertArrayEquals(BinaryUtils.concat(cord1Bytes, cord2Bytes, cord3Bytes), BinaryUtils.iteratorToBytes(input));
     }
 }

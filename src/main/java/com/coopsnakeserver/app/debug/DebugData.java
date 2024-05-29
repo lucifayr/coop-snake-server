@@ -2,13 +2,13 @@ package com.coopsnakeserver.app.debug;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 
 import com.coopsnakeserver.app.BinaryUtils;
-import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.pojo.Coordinate;
 
 /**
@@ -19,21 +19,26 @@ import com.coopsnakeserver.app.pojo.Coordinate;
  * @author June L. Gschwantner
  */
 public class DebugData {
-    private final InputStream DEBUG_PLAYER_COORDS_FROM_FILE;
+    private final ByteBuffer DEBUG_PLAYER_COORDS;
+
     private final HashSet<DebugFlag> enabledFlags = new HashSet<>();
 
     private static DebugData INSTANCE;
 
-    private DebugData(Optional<String> debugCoordDataFile) {
+    private DebugData(Optional<String> debugCoordDataFile) throws IOException {
         if (debugCoordDataFile.isPresent()) {
             enabledFlags.add(DebugFlag.PlayerCoordinateDataFromFile);
-            this.DEBUG_PLAYER_COORDS_FROM_FILE = this.getClass().getResourceAsStream(debugCoordDataFile.get());
+            this.DEBUG_PLAYER_COORDS = ByteBuffer.wrap(this.getClass().getResourceAsStream(debugCoordDataFile.get())
+                    .readAllBytes());
+
+            this.DEBUG_PLAYER_COORDS.mark();
+
         } else {
-            this.DEBUG_PLAYER_COORDS_FROM_FILE = null;
+            this.DEBUG_PLAYER_COORDS = null;
         }
     }
 
-    public static void init(Optional<String> debugPosDataFile) {
+    public static void init(Optional<String> debugPosDataFile) throws IOException {
         if (INSTANCE != null) {
             return;
         }
@@ -54,31 +59,33 @@ public class DebugData {
     }
 
     public Optional<Coordinate[]> nextDebugCoords() {
-        if (this.DEBUG_PLAYER_COORDS_FROM_FILE == null) {
+        if (this.DEBUG_PLAYER_COORDS == null) {
             return Optional.empty();
         }
 
-        var termiator = new byte[] { (byte) 255, (byte) 255, (byte) 255, (byte) 255 };
+        var terminator = new byte[] { (byte) 255, (byte) 255, (byte) 255, (byte) 255 };
         var coords = new ArrayList<Coordinate>();
-        try {
-            while (this.DEBUG_PLAYER_COORDS_FROM_FILE.available() > 0) {
-                var xBytes = this.DEBUG_PLAYER_COORDS_FROM_FILE.readNBytes(4);
-                if (Arrays.equals(xBytes, termiator)) {
-                    break;
-                }
 
-                var yBytes = this.DEBUG_PLAYER_COORDS_FROM_FILE.readNBytes(4);
-                if (Arrays.equals(yBytes, termiator)) {
-                    break;
-                }
-
-                var x = BinaryUtils.bytesToInt32(xBytes);
-                var y = BinaryUtils.bytesToInt32(yBytes);
-                coords.add(new Coordinate(x, y));
+        while (this.DEBUG_PLAYER_COORDS.remaining() > 0) {
+            var xBytes = new byte[4];
+            this.DEBUG_PLAYER_COORDS.get(xBytes);
+            if (Arrays.equals(xBytes, terminator)) {
+                break;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return Optional.empty();
+
+            var yBytes = new byte[4];
+            this.DEBUG_PLAYER_COORDS.get(yBytes);
+            if (Arrays.equals(yBytes, terminator)) {
+                break;
+            }
+
+            var x = BinaryUtils.bytesToInt32(xBytes);
+            var y = BinaryUtils.bytesToInt32(yBytes);
+            coords.add(new Coordinate(x, y));
+        }
+
+        if (this.DEBUG_PLAYER_COORDS.remaining() == 0) {
+            this.DEBUG_PLAYER_COORDS.reset();
         }
 
         Coordinate[] arr = new Coordinate[coords.size()];

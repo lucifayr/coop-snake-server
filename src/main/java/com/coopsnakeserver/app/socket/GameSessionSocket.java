@@ -32,8 +32,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     public static int FPS = 30;
     public static long TICK_RATE_MILLIS = 1_000 / FPS;
 
-    public static int GAME_BOARD_WIDTH = 40;
-    public static int GAME_BOARD_HEIGHT = 40;
+    public static int GAME_BOARD_SIZE = 20;
 
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
     HashMap<String, ScheduledFuture<?>> connections = new HashMap<>();
@@ -82,7 +81,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         }
 
         var playerCoords = new PlayerCoordiantes(player, coords);
-        System.out.println(playerCoords);
         var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoords.intoBytes());
         return new BinaryMessage(placeholderGameState.intoBytes());
     }
@@ -90,8 +88,8 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     private static Coordinate[] randomCoords() {
         var coords = new Coordinate[ThreadLocalRandom.current().nextInt(0, 40)];
         for (int i = 0; i < coords.length; i++) {
-            var randX = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_WIDTH);
-            var randY = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_HEIGHT);
+            var randX = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_SIZE);
+            var randY = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_SIZE);
             coords[i] = new Coordinate(randX, randY);
         }
 

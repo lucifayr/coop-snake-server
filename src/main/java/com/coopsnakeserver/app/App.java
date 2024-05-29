@@ -26,7 +26,11 @@ public class App {
                 debug_coords_file = Optional.of("/debug/" + path);
             }
 
-            DebugData.init(debug_coords_file);
+            try {
+                DebugData.init(debug_coords_file);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         SpringApplication.run(App.class, args);

@@ -50,15 +50,15 @@ public enum SwipeInputKind implements IntoBytes {
     public String toString() {
         switch (this.value) {
             case 0:
-                return "Swipe Direction: Up";
+                return "Up";
             case 1:
-                return "Swipe Direction: Right";
+                return "Right";
             case 2:
-                return "Swipe Direction: Down";
+                return "Down";
             case 3:
-                return "Swipe Direction: Left";
+                return "Left";
             default:
-                return "Swipe Direction: Invalid!";
+                return "Invalid!";
         }
     }
 }

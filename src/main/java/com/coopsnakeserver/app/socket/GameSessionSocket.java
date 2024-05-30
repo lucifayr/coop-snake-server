@@ -72,9 +72,8 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         var bytes = message.getPayload().array();
-        System.out.println(String.format("Message from session %s: %s", session.getId(), Arrays.toString(bytes)));
-
         var msg = GameBinaryMessage.fromBytes(bytes);
+
         if (msg.getType() == GameMessageType.PlayerSwipeInput) {
             var input = PlayerSwipeInput.fromBytes(msg.getData());
             System.out.println(input);

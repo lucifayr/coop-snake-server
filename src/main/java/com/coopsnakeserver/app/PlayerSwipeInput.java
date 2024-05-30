@@ -42,4 +42,8 @@ public class PlayerSwipeInput {
         return frameTimestamp;
     }
 
+    @Override
+    public String toString() {
+        return String.format("PlayerSwipeInput (kind = %5s, frame = %010d)", this.kind, this.frameTimestamp);
+    }
 }

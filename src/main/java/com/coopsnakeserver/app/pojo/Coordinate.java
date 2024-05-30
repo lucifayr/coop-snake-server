@@ -34,4 +34,13 @@ public class Coordinate implements IntoBytes {
     public String toString() {
         return String.format("X: %02d, Y: %02d", this.x, this.y);
     }
+
+    public short x() {
+        return x;
+    }
+
+    public short y() {
+        return y;
+    }
+
 }

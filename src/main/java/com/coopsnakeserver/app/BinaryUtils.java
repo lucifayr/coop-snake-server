@@ -62,12 +62,29 @@ public class BinaryUtils {
      * @param value Unsigned integer to convert to byte slice.
      */
     public static byte[] int32ToBytes(int value) {
-        DevUtils.assertion(value >= 0, "integer must be greater 0. Recevied value " + value);
+        DevUtils.assertion(value >= 0, "integer must be greater or equal to 0. Recevied value " + value);
 
         var bytes = ByteBuffer
                 .allocate(Integer.BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .putInt(value)
+                .array();
+
+        return bytes;
+    }
+
+    /**
+     * Convert an unsigned int 16 to a 2 byte slice (big endian).
+     *
+     * @param value Unsigned integer to convert to byte slice.
+     */
+    public static byte[] int16ToBytes(short value) {
+        DevUtils.assertion(value >= 0, "short integer must be greater or equal to 0. Recevied value " + value);
+
+        var bytes = ByteBuffer
+                .allocate(Short.BYTES)
+                .order(ByteOrder.BIG_ENDIAN)
+                .putShort(value)
                 .array();
 
         return bytes;
@@ -92,5 +109,26 @@ public class BinaryUtils {
                 .getInt(0);
 
         return int32;
+    }
+
+    /**
+     * Convert an byte slice of length 2 to a 16 bit int. Byte slice is read
+     * as big endian.
+     *
+     * @param value Byte slice to convert to an integer. Must be exactly 2 bytes
+     *              long.
+     */
+    public static short bytesToInt16(byte[] value) {
+        DevUtils.assertion(value.length == 2,
+                "length of byte array should be 2 when converting to an int16. Received byte array "
+                        + Arrays.toString(value));
+
+        var int16 = ByteBuffer
+                .wrap(value)
+                .order(ByteOrder.BIG_ENDIAN)
+                .put(value)
+                .getShort(0);
+
+        return int16;
     }
 }

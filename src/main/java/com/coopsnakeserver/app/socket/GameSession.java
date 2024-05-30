@@ -31,6 +31,7 @@ public class GameSession {
     public static int TICKS_PER_SECOND = 16;
     public static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
     public static int GAME_BOARD_SIZE = 20;
+    public static int INITIAL_SNAKE_SIZE = 3;
 
     private PlayerToken p1Token;
     private PlayerToken p2Token;
@@ -108,7 +109,7 @@ public class GameSession {
         for (int i = 0; i < coords.length; i++) {
             var randX = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_SIZE);
             var randY = ThreadLocalRandom.current().nextInt(0, GAME_BOARD_SIZE);
-            coords[i] = new Coordinate(randX, randY);
+            coords[i] = new Coordinate((short) randX, (short) randY);
         }
 
         return coords;

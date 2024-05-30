@@ -54,9 +54,9 @@ public class BinaryUtilsTest {
 
     @Test
     public void shouldConvertIteratorToBytesCoorrectly() {
-        var cord1 = new Coordinate(10, 11);
-        var cord2 = new Coordinate(120, 80);
-        var cord3 = new Coordinate(23, 84);
+        var cord1 = new Coordinate((short) 10, (short) 11);
+        var cord2 = new Coordinate((short) 120, (short) 80);
+        var cord3 = new Coordinate((short) 23, (short) 84);
         var cord1Bytes = cord1.intoBytes();
         var cord2Bytes = cord2.intoBytes();
         var cord3Bytes = cord3.intoBytes();
@@ -64,8 +64,7 @@ public class BinaryUtilsTest {
         var input = new Coordinate[] { cord1, cord2, cord3 };
 
         assertArrayEquals(new byte[] {
-                0, 0, 0, 10,
-                0, 0, 0, 11
+                0, 10, 0, 11
         }, cord1Bytes);
         assertArrayEquals(BinaryUtils.concat(cord1Bytes, cord2Bytes, cord3Bytes), BinaryUtils.iteratorToBytes(input));
     }

@@ -1,7 +1,6 @@
 package com.coopsnakeserver.app.debug;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,24 +62,24 @@ public class DebugData {
             return Optional.empty();
         }
 
-        var terminator = new byte[] { (byte) 255, (byte) 255, (byte) 255, (byte) 255 };
+        var terminator = new byte[] { (byte) 255, (byte) 255 };
         var coords = new ArrayList<Coordinate>();
 
         while (this.DEBUG_PLAYER_COORDS.remaining() > 0) {
-            var xBytes = new byte[4];
+            var xBytes = new byte[2];
             this.DEBUG_PLAYER_COORDS.get(xBytes);
             if (Arrays.equals(xBytes, terminator)) {
                 break;
             }
 
-            var yBytes = new byte[4];
+            var yBytes = new byte[2];
             this.DEBUG_PLAYER_COORDS.get(yBytes);
             if (Arrays.equals(yBytes, terminator)) {
                 break;
             }
 
-            var x = BinaryUtils.bytesToInt32(xBytes);
-            var y = BinaryUtils.bytesToInt32(yBytes);
+            var x = BinaryUtils.bytesToInt16(xBytes);
+            var y = BinaryUtils.bytesToInt16(yBytes);
             coords.add(new Coordinate(x, y));
         }
 

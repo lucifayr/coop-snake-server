@@ -12,20 +12,24 @@ public enum Player implements IntoBytes {
     Player1((byte) 1),
     Player2((byte) 2);
 
-    private final byte id;
+    private final byte value;
 
     private Player(byte id) {
-        this.id = id;
+        this.value = id;
+    }
+
+    public byte getValue() {
+        return this.value;
     }
 
     @Override
     public byte[] intoBytes() {
-        return new byte[] { this.id };
+        return new byte[] { this.value };
     }
 
     @Override
     public String toString() {
-        switch (this.id) {
+        switch (this.value) {
             case 1:
                 return "Player 1";
             case 2:

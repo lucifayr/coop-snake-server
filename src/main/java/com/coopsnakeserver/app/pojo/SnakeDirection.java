@@ -12,6 +12,21 @@ public enum SnakeDirection {
     Down,
     Left;
 
+    public SwipeInputKind intoSwipeInput() {
+        switch (this) {
+            case Up:
+                return SwipeInputKind.Up;
+            case Right:
+                return SwipeInputKind.Right;
+            case Down:
+                return SwipeInputKind.Down;
+            case Left:
+                return SwipeInputKind.Left;
+            default:
+                return SwipeInputKind.Up;
+        }
+    }
+
     public static SnakeDirection fromSwipeInput(SwipeInputKind kind) {
         switch (kind) {
             case Up:

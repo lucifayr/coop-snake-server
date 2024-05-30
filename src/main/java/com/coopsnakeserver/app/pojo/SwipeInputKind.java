@@ -22,6 +22,14 @@ public enum SwipeInputKind implements IntoBytes {
         this.value = value;
     }
 
+    public boolean isOnSameAxis(SwipeInputKind other) {
+        if (other.value >= this.value) {
+            return Math.abs(other.value - this.value) == 2;
+        } else {
+            return Math.abs(this.value - other.value) == 2;
+        }
+    }
+
     public static Optional<SwipeInputKind> fromByte(byte value) {
         switch (value) {
             case 0:

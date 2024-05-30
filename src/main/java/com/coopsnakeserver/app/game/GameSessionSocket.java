@@ -1,4 +1,4 @@
-package com.coopsnakeserver.app.socket;
+package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.coopsnakeserver.app.socket;
+package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -28,12 +28,8 @@ public class GameSession {
 
     private static short INITIAL_SNAKE_SIZE = 3;
 
-    private GameLoop p1Loop;
-    private GameLoop p2Loop;
-    private WebSocketSession p1Conn;
-    private WebSocketSession p2Conn;
-    private PlayerToken p1Token;
-    private PlayerToken p2Token;
+    private PlayerGameState p1State;
+    private PlayerGameState p2State;
 
     private int tickN = 0;
     private boolean gameRunning = true;
@@ -41,16 +37,17 @@ public class GameSession {
     private ScheduledFuture<?> tickFunc;
 
     public GameSession() {
-        this.p1Token = PlayerToken.genRandom(Optional.empty());
-        this.p2Token = PlayerToken.genRandom(Optional.of(this.p1Token));
+        // this.p1Token = PlayerToken.genRandom(Optional.empty());
+        // this.p2Token = PlayerToken.genRandom(Optional.of(this.p1Token));
 
         System.out.println("Created new session");
     }
 
     public void connectFirst(ScheduledExecutorService executor, WebSocketSession session) throws IOException {
-        this.p1Loop = new GameLoop(this, Player.Player1, INITIAL_SNAKE_SIZE);
-        this.p1Conn = session;
-        session.sendMessage(this.p1Token.intoMsg());
+        var token = PlayerToken.genRandom(Optional.empty());
+        session.sendMessage(token.intoMsg());
+
+        this.p1State = new PlayerGameState(this, session, Player.Player1, token, INITIAL_SNAKE_SIZE);
 
         var future = executor.scheduleWithFixedDelay(() -> {
             if (!this.gameRunning) {
@@ -59,19 +56,12 @@ public class GameSession {
             }
 
             tickN += 1;
-
-            var p1Coords = this.p1Loop.tick(tickN);
-            if (p1Coords.isEmpty()) {
+            var gameOver = GameLoop.tick(this.p1State, tickN);
+            if (gameOver) {
                 this.gameRunning = false;
                 return;
             }
 
-            var p1Msg = new GameBinaryMessage(GameMessageType.SnakePosition, p1Coords.get().intoBytes());
-            try {
-                p1Conn.sendMessage(new BinaryMessage(p1Msg.intoBytes()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }, 0, TICK_RATE_MILLIS, TimeUnit.MILLISECONDS);
 
         this.tickFunc = future;
@@ -80,7 +70,9 @@ public class GameSession {
 
     public void teardown() {
         this.tickFunc.cancel(true);
-        System.out.println("Closed session: " + p1Conn.getId());
+
+        System.out.println("Closed 1 session: " + p1State.getConnection().getId());
+        System.out.println("Closed 2 session: " + p2State.getConnection().getId());
     }
 
     public void handleBinWsMsg(BinaryMessage message) {
@@ -94,9 +86,20 @@ public class GameSession {
 
     private void handleInput(GameBinaryMessage msg) {
         var input = PlayerSwipeInput.fromBytes(msg.getData());
-        var validToken = input.getPlayerToken().tokenOwner(this.p1Token, this.p2Token);
-        if (validToken.isPresent() && validToken.get() == Player.Player1) {
-            p1Loop.setInput(Optional.of(input));
+        // var validToken = input.getPlayerToken().tokenOwner(this.p1State.getToken(),
+        // this.p2State.getToken());
+        var validToken = input.getPlayerToken().tokenOwner(this.p1State.getToken(),
+                PlayerToken.genRandom(Optional.of(this.p1State.getToken())));
+
+        if (validToken.isPresent()) {
+            switch (validToken.get()) {
+                case Player1:
+                    p1State.setInput(Optional.of(input));
+                    break;
+                case Player2:
+                    p2State.setInput(Optional.of(input));
+                    break;
+            }
         }
 
     }

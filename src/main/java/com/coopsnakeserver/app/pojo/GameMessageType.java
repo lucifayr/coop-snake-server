@@ -1,6 +1,9 @@
-package com.coopsnakeserver.app;
+package com.coopsnakeserver.app.pojo;
 
 import java.util.Optional;
+
+import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.IntoBytes;
 
 /**
  * GameMessageType
@@ -11,7 +14,7 @@ import java.util.Optional;
  */
 public enum GameMessageType implements IntoBytes {
     SnakePosition(0),
-    PlayerInput(1);
+    PlayerSwipeInput(1);
 
     private final int tag;
 
@@ -25,7 +28,7 @@ public enum GameMessageType implements IntoBytes {
                 return Optional.of(GameMessageType.SnakePosition);
 
             case 1:
-                return Optional.of(GameMessageType.PlayerInput);
+                return Optional.of(GameMessageType.PlayerSwipeInput);
 
             default:
                 return Optional.empty();

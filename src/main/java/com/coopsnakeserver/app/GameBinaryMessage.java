@@ -2,6 +2,8 @@ package com.coopsnakeserver.app;
 
 import java.util.Arrays;
 
+import com.coopsnakeserver.app.pojo.GameMessageType;
+
 /**
  * GameBinaryMessage
  *

@@ -1,6 +1,6 @@
 package com.coopsnakeserver.app;
 
-import com.coopsnakeserver.app.GameMessageType;
+import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.GameBinaryMessage;
 
 import static org.junit.Assert.assertArrayEquals;

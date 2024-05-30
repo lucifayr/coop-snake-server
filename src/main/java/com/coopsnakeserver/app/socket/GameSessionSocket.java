@@ -14,8 +14,10 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
-import com.coopsnakeserver.app.GameMessageType;
+import com.coopsnakeserver.app.PlayerSwipeInput;
+import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.debug.DebugData;
 import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.pojo.Coordinate;
@@ -71,7 +73,12 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         var bytes = message.getPayload().array();
         System.out.println(String.format("Message from session %s: %s", session.getId(), Arrays.toString(bytes)));
-        // var msg = GameBinaryMessage.fromBytes(bytes);
+
+        var msg = GameBinaryMessage.fromBytes(bytes);
+        if (msg.getType() == GameMessageType.PlayerSwipeInput) {
+            var input = PlayerSwipeInput.fromBytes(msg.getData());
+            System.out.println(input);
+        }
     }
 
     private static BinaryMessage placeholderData(Player player) {

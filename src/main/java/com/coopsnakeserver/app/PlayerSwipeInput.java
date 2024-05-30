@@ -13,11 +13,11 @@ import com.coopsnakeserver.app.pojo.SwipeInputKind;
  */
 public class PlayerSwipeInput {
     private SwipeInputKind kind;
-    private int frameTimestamp;
+    private int tickN;
 
-    private PlayerSwipeInput(SwipeInputKind kind, int frameTimestamp) {
+    private PlayerSwipeInput(SwipeInputKind kind, int tickN) {
         this.kind = kind;
-        this.frameTimestamp = frameTimestamp;
+        this.tickN = tickN;
     }
 
     public static PlayerSwipeInput fromBytes(byte[] bytes) {
@@ -28,22 +28,22 @@ public class PlayerSwipeInput {
         var kind = SwipeInputKind.fromByte(kindByte);
         DevUtils.assertion(kind.isPresent(), String.format("Received invalid byte %d for swipe input kind.", kindByte));
 
-        var frameTimestampBytes = Arrays.copyOfRange(bytes, 1, 5);
-        var frameTimestamp = BinaryUtils.bytesToInt32(frameTimestampBytes);
+        var tickNBytes = Arrays.copyOfRange(bytes, 1, 5);
+        var tickN = BinaryUtils.bytesToInt32(tickNBytes);
 
-        return new PlayerSwipeInput(kind.get(), frameTimestamp);
+        return new PlayerSwipeInput(kind.get(), tickN);
     }
 
     public SwipeInputKind getKind() {
         return kind;
     }
 
-    public int getFrameTimestamp() {
-        return frameTimestamp;
+    public int getTickN() {
+        return tickN;
     }
 
     @Override
     public String toString() {
-        return String.format("PlayerSwipeInput (kind = %5s, frame = %010d)", this.kind, this.frameTimestamp);
+        return String.format("PlayerSwipeInput (kind = %5s, frame = %010d)", this.kind, this.tickN);
     }
 }

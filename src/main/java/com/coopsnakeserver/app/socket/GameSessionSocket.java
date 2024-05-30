@@ -34,6 +34,8 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
     public static int GAME_BOARD_SIZE = 20;
 
+    private int tickN = 0;
+
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
     HashMap<String, ScheduledFuture<?>> connections = new HashMap<>();
 
@@ -41,8 +43,10 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         var id = session.getId();
         var future = executor.scheduleWithFixedDelay(() -> {
+            tickN += 1;
+
             try {
-                session.sendMessage(placeholderData(Player.Player1));
+                session.sendMessage(placeholderData(Player.Player1, tickN));
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
@@ -78,13 +82,13 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         }
     }
 
-    private static BinaryMessage placeholderData(Player player) {
+    private static BinaryMessage placeholderData(Player player, int tickN) {
         var coords = randomCoords();
         if (DebugData.instanceHasFlag(DebugFlag.PlayerCoordinateDataFromFile)) {
             coords = DebugData.instance().nextDebugCoords().orElseGet(() -> new Coordinate[0]);
         }
 
-        var playerCoords = new PlayerCoordiantes(player, coords);
+        var playerCoords = new PlayerCoordiantes(player, tickN, coords);
         var placeholderGameState = new GameBinaryMessage(GameMessageType.SnakePosition, playerCoords.intoBytes());
         return new BinaryMessage(placeholderGameState.intoBytes());
     }

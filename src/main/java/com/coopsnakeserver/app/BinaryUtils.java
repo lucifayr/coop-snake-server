@@ -82,7 +82,8 @@ public class BinaryUtils {
      */
     public static int bytesToInt32(byte[] value) {
         DevUtils.assertion(value.length == 4,
-                "length of byte array should always be 4. Received byte array " + Arrays.toString(value));
+                "length of byte array should be 4 when converting to an int. Received byte array "
+                        + Arrays.toString(value));
 
         var int32 = ByteBuffer
                 .wrap(value)

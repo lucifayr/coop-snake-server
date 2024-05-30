@@ -19,6 +19,8 @@ public class PlayerSwipeInputTest {
         @Test
         public void shouldParseValidDateCorrectly() {
                 var case1 = new byte[] {
+                                // Token
+                                0, 0, 0, 0,
                                 // Swipe Kind
                                 0,
                                 // Tick Number
@@ -30,6 +32,8 @@ public class PlayerSwipeInputTest {
                 assertEquals(output1.getTickN(), 260);
 
                 var case2 = new byte[] {
+                                // Token
+                                0, 0, 0, 0,
                                 // Swipe Kind
                                 3,
                                 // Tick Number
@@ -44,6 +48,8 @@ public class PlayerSwipeInputTest {
         @Test
         public void shouldThrowOnInvalidData() {
                 var case1 = new byte[] {
+                                // Token
+                                0, 0, 0, 0,
                                 // Swipe Kind (invalid)
                                 5,
                                 // Tick Number
@@ -53,6 +59,8 @@ public class PlayerSwipeInputTest {
                 assertThrows(RuntimeException.class, () -> PlayerSwipeInput.fromBytes(case1));
 
                 var case2 = new byte[] {
+                                // Token
+                                0, 0, 0, 0,
                                 // Swipe Kind
                                 0,
                                 // Tick Number (missing bytes)

@@ -1,7 +1,6 @@
 package com.coopsnakeserver.app.socket;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -14,7 +13,6 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
-import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.pojo.GameMessageType;
@@ -31,8 +29,8 @@ import com.coopsnakeserver.app.pojo.PlayerCoordiantes;
  * @author June L. Gschwantner
  */
 public class GameSessionSocket extends BinaryWebSocketHandler {
-    public static int FPS = 30;
-    public static long TICK_RATE_MILLIS = 1_000 / FPS;
+    public static int TICKS_PER_SECOND = 16;
+    public static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
 
     public static int GAME_BOARD_SIZE = 20;
 

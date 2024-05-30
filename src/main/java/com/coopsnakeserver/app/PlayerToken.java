@@ -3,6 +3,9 @@ package com.coopsnakeserver.app;
 import java.security.SecureRandom;
 import java.util.Optional;
 
+import org.springframework.web.socket.TextMessage;
+
+import com.coopsnakeserver.app.pojo.PlainTextMsgPrefix;
 import com.coopsnakeserver.app.pojo.Player;
 
 /**
@@ -26,9 +29,19 @@ public class PlayerToken implements IntoBytes {
         return new PlayerToken(token);
     }
 
-    public PlayerToken genRandom() {
+    public static PlayerToken genRandom(Optional<PlayerToken> other) {
         var token = new SecureRandom().nextInt(0, Integer.MAX_VALUE);
+        while (other.isPresent() && other.get().token == token) {
+            token = new SecureRandom().nextInt(0, Integer.MAX_VALUE);
+        }
+
         return new PlayerToken(token);
+    }
+
+    public TextMessage intoMsg() {
+        var tokenString = String.format("%010d", this.token);
+        var msg = PlainTextMsgPrefix.PlayerToken.format(tokenString);
+        return new TextMessage(msg);
     }
 
     public Optional<Player> tokenOwner(PlayerToken p1Token, PlayerToken p2Token) {

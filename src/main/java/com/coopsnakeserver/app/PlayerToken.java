@@ -5,8 +5,10 @@ import java.util.Optional;
 
 import org.springframework.web.socket.TextMessage;
 
-import com.coopsnakeserver.app.pojo.PlainTextMsgPrefix;
+import com.coopsnakeserver.app.pojo.SessionInfoType;
+import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
+import com.coopsnakeserver.app.pojo.SessionInfo;
 
 /**
  * PlayerInputToken
@@ -38,10 +40,10 @@ public class PlayerToken implements IntoBytes {
         return new PlayerToken(token);
     }
 
-    public TextMessage intoMsg() {
-        var tokenString = String.format("%010d", this.token);
-        var msg = PlainTextMsgPrefix.PlayerToken.format(tokenString);
-        return new TextMessage(msg);
+    public GameBinaryMessage intoMsg() {
+        var type = SessionInfoType.PlayerToken;
+        var info = new SessionInfo(type, this.token);
+        return new GameBinaryMessage(GameMessageType.SessionInfo, info.intoBytes());
     }
 
     public Optional<Player> tokenOwner(PlayerToken p1Token, PlayerToken p2Token) {

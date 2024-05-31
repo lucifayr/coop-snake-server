@@ -14,6 +14,8 @@ import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
+import com.coopsnakeserver.app.pojo.SessionInfo;
+import com.coopsnakeserver.app.pojo.SessionInfoType;
 
 /**
  *
@@ -24,7 +26,7 @@ import com.coopsnakeserver.app.pojo.Player;
 public class GameSession {
     private static int TICKS_PER_SECOND = 16;
     private static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
-    private static short GAME_BOARD_SIZE = 20;
+    private static short GAME_BOARD_SIZE = 32;
 
     private static short INITIAL_SNAKE_SIZE = 3;
 
@@ -45,7 +47,13 @@ public class GameSession {
 
     public void connectFirst(ScheduledExecutorService executor, WebSocketSession session) throws IOException {
         var token = PlayerToken.genRandom(Optional.empty());
-        session.sendMessage(token.intoMsg());
+        var tokenMsg = new BinaryMessage(token.intoMsg().intoBytes());
+        session.sendMessage(tokenMsg);
+
+        var boardInfo = new SessionInfo(SessionInfoType.BoardSize, GAME_BOARD_SIZE);
+        var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
+        var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
+        session.sendMessage(boardInfoMsgBin);
 
         this.p1State = new PlayerGameState(this, session, Player.Player1, token, INITIAL_SNAKE_SIZE);
 

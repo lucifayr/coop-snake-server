@@ -92,7 +92,7 @@ public class PlayerGameState {
                 "tickN doesn't match lastTick. Make sure to call processTick before calling this function!");
 
         var coords = this.getCurrentPlayerCoords(tickN);
-        var msg = new GameBinaryMessage(GameMessageType.SnakePosition, coords.intoBytes());
+        var msg = new GameBinaryMessage(GameMessageType.PlayerPosition, coords.intoBytes());
 
         try {
             ws.sendMessage(new BinaryMessage(msg.intoBytes()));

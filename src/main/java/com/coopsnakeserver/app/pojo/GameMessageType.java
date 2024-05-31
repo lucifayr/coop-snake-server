@@ -13,8 +13,9 @@ import com.coopsnakeserver.app.IntoBytes;
  * @author June L. Gshwantner
  */
 public enum GameMessageType implements IntoBytes {
-    SnakePosition(0),
-    PlayerSwipeInput(1);
+    PlayerPosition(0),
+    PlayerSwipeInput(1),
+    SessionInfo(2);
 
     private final int tag;
 
@@ -25,7 +26,7 @@ public enum GameMessageType implements IntoBytes {
     public static Optional<GameMessageType> fromTag(int typeTag) {
         switch (typeTag) {
             case 0:
-                return Optional.of(GameMessageType.SnakePosition);
+                return Optional.of(GameMessageType.PlayerPosition);
 
             case 1:
                 return Optional.of(GameMessageType.PlayerSwipeInput);

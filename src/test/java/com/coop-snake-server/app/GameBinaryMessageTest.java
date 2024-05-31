@@ -20,7 +20,7 @@ public class GameBinaryMessageTest {
     @Test
     public void shouldConstructTheCorrectMessage() {
         var inputData = new byte[] { 127, 0, 0, 1, 42, 65, 10, 24 };
-        var inputType = GameMessageType.SnakePosition;
+        var inputType = GameMessageType.PlayerPosition;
 
         var output = new GameBinaryMessage(inputType, inputData).intoBytes();
         assertEquals(GameBinaryMessage.MESSAGE_VERSION, output[0]);

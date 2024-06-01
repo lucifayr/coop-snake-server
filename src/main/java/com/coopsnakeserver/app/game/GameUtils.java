@@ -15,10 +15,10 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  */
 public class GameUtils {
     public static boolean headOutOfBounds(Coordinate head, short boardSize) {
-        var outUp = head.x() < 0;
-        var outRight = head.y() >= boardSize;
-        var outDown = head.x() >= boardSize;
-        var outLeft = head.y() < 0;
+        var outUp = head.y() < 0;
+        var outRight = head.x() >= boardSize;
+        var outDown = head.y() >= boardSize;
+        var outLeft = head.x() < 0;
 
         return outUp || outRight || outDown || outLeft;
     }
@@ -38,8 +38,30 @@ public class GameUtils {
         }
     }
 
+    public static Coordinate wrappedHead(Coordinate head, short boardSize) {
+        var x = head.x();
+        if (x < 0) {
+            x = (short) (boardSize - 1);
+        }
+
+        if (x >= boardSize) {
+            x = 0;
+        }
+
+        var y = head.y();
+        if (y < 0) {
+            y = (short) (boardSize - 1);
+        }
+
+        if (y >= boardSize) {
+            y = 0;
+        }
+
+        return new Coordinate(x, y);
+    }
+
     public static ArrayDeque<Coordinate> initialCoords(short snakeSize, short boardSize, short yOffset,
-            boolean reverse) {
+            boolean goLeft) {
         DevUtils.assertion(boardSize / 2 > snakeSize, "Board is too small to initialize a snake.");
         var coords = new ArrayDeque<Coordinate>(snakeSize);
 
@@ -51,10 +73,10 @@ public class GameUtils {
 
         for (var i = 1; i < snakeSize; i++) {
             var x = 0;
-            if (reverse) {
+            if (goLeft) {
                 x = x0 - i;
             } else {
-                x = x0 - i;
+                x = x0 + i;
             }
 
             var c = new Coordinate((short) x, (short) y0);

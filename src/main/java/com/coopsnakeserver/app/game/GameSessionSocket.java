@@ -9,6 +9,9 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
+import com.coopsnakeserver.app.debug.DebugData;
+import com.coopsnakeserver.app.debug.DebugFlag;
+
 /**
  *
  * created: 25.05.2024
@@ -49,6 +52,15 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
+        if (DebugData.instanceHasFlag(DebugFlag.MessageInputLatency)) {
+            var latency = DebugData.instance().messageInLatency();
+            try {
+                Thread.sleep(latency);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         var gameSession = gameSessions.get(session.getId());
         if (gameSession == null) {
             return;

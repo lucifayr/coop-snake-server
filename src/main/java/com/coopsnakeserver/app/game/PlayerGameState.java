@@ -3,8 +3,6 @@ package com.coopsnakeserver.app.game;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -15,6 +13,7 @@ import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
 import com.coopsnakeserver.app.debug.DebugData;
 import com.coopsnakeserver.app.debug.DebugFlag;
+import com.coopsnakeserver.app.game.snapshots.SnakeSnapshotHandler;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
@@ -29,6 +28,7 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class PlayerGameState {
+    private SnakeSnapshotHandler snapshotHandler;
     private GameSession session;
     private WebSocketSession ws;
 
@@ -53,9 +53,17 @@ public class PlayerGameState {
         this.token = token;
 
         short yOffset = player.getValue();
-        var reverse = yOffset % 2 == 0;
-        this.coords = GameUtils.initialCoords(initialSankeSize, session.getBoardSize(), yOffset, reverse);
+        var goLeft = yOffset % 2 == 0;
+        this.coords = GameUtils.initialCoords(initialSankeSize, session.getBoardSize(), yOffset, goLeft);
 
+        if (goLeft) {
+            this.direction = SnakeDirection.Left;
+        } else {
+            this.direction = SnakeDirection.Right;
+        }
+
+        this.snapshotHandler = new SnakeSnapshotHandler((int) GameSession.INPUT_LATENCY_GRACE_PERIOD_TICKS);
+        this.snapshotHandler.takeSnapshot(this.coords.clone(), this.direction);
     }
 
     /**
@@ -81,8 +89,10 @@ public class PlayerGameState {
 
         this.lastTick = tickN;
 
-        this.processInput();
+        this.processInput(tickN);
         this.updateCoords();
+
+        this.snapshotHandler.takeSnapshot(this.coords.clone(), this.direction);
 
         return this.gameOverConditionHit;
     }
@@ -112,8 +122,11 @@ public class PlayerGameState {
     private void updateCoords() {
         var snakeHead = this.coords.peekFirst();
         var snakeHeadNext = GameUtils.nextHead(snakeHead, this.direction);
-        var isOutOfBounds = GameUtils.headOutOfBounds(snakeHeadNext, this.session.getBoardSize());
+        if (DebugData.instanceHasFlag(DebugFlag.WrapAroundOnOutOfBounds)) {
+            snakeHeadNext = GameUtils.wrappedHead(snakeHeadNext, this.session.getBoardSize());
+        }
 
+        var isOutOfBounds = GameUtils.headOutOfBounds(snakeHeadNext, this.session.getBoardSize());
         if (isOutOfBounds) {
             this.gameOverConditionHit = true;
             return;
@@ -123,17 +136,29 @@ public class PlayerGameState {
         this.coords.removeLast();
     }
 
-    private void processInput() {
-        if (this.input.isPresent()) {
-            var inputKind = this.input.get().getKind();
-            if (inputKind.isOnSameAxis(this.direction.intoSwipeInput())) {
-                return;
-            }
-
-            // TODO: handle tickN and add grace period
-            this.direction = SnakeDirection.fromSwipeInput(inputKind);
-            this.input = Optional.empty();
+    private void processInput(int tickN) {
+        if (this.input.isEmpty()) {
+            return;
         }
+
+        var input = this.input.get();
+
+        var tickOnClientInput = input.getTickN();
+        var ticksDueToLatencyDelta = tickN - tickOnClientInput;
+        var snapshotAtClientTick = this.snapshotHandler.rewind(ticksDueToLatencyDelta);
+        if (snapshotAtClientTick.isEmpty()) {
+            return;
+        }
+
+        var snapshot = snapshotAtClientTick.get();
+        var swipeIsNoop = input.getKind().isOnSameAxis(snapshot.getDirection().intoSwipeInput());
+        if (swipeIsNoop) {
+            return;
+        }
+
+        this.direction = SnakeDirection.fromSwipeInput(input.getKind());
+        this.coords = snapshot.getCoords();
+        this.input = Optional.empty();
     }
 
     private PlayerCoordiantes getCurrentPlayerCoords(int tickN) {

@@ -24,10 +24,14 @@ import com.coopsnakeserver.app.pojo.SessionInfoType;
  * @author June L. Gschwantner
  */
 public class GameSession {
-    private static int TICKS_PER_SECOND = 16;
+    public static int TICKS_PER_SECOND = 16;
     private static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
-    private static short GAME_BOARD_SIZE = 32;
 
+    private static long INPUT_LATENCY_GRACE_PERIOD_MILLIS = 400;
+    public static long INPUT_LATENCY_GRACE_PERIOD_TICKS = (long) ((double) GameSession.TICKS_PER_SECOND
+            * ((double) INPUT_LATENCY_GRACE_PERIOD_MILLIS / (double) 1_000));
+
+    private static short GAME_BOARD_SIZE = 32;
     private static short INITIAL_SNAKE_SIZE = 3;
 
     private PlayerGameState p1State;
@@ -80,7 +84,7 @@ public class GameSession {
         this.tickFunc.cancel(true);
 
         System.out.println("Closed 1 session: " + p1State.getConnection().getId());
-        System.out.println("Closed 2 session: " + p2State.getConnection().getId());
+        // System.out.println("Closed 2 session: " + p2State.getConnection().getId());
     }
 
     public void handleBinWsMsg(BinaryMessage message) {

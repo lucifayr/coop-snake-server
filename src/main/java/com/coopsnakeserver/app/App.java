@@ -17,22 +17,40 @@ import com.coopsnakeserver.app.debug.DebugData;
 public class App {
 
     public static void main(String[] args) {
+        initDebug();
+        SpringApplication.run(App.class, args);
+    }
+
+    private static void initDebug() {
         var debug = System.getenv("SNAKE_DEBUG");
-        if (debug != null && debug.equals("true")) {
 
-            Optional<String> debug_coords_file = Optional.empty();
-            var path = System.getenv("SNAKE_DEBUG_COORDS_FILE");
-            if (path != null) {
-                debug_coords_file = Optional.of("/debug/" + path);
-            }
+        if (debug == null || !debug.equals("true")) {
+            return;
+        }
 
+        Optional<String> debugCoordsFile = Optional.empty();
+        var path = System.getenv("SNAKE_DEBUG_COORDS_FILE");
+        if (path != null) {
+            debugCoordsFile = Optional.of("/debug/" + path);
+        }
+
+        Optional<Long> messageInLatency = Optional.empty();
+        var latency = System.getenv("SNAKE_DEBUG_MSG_IN_LATENCY");
+        if (latency != null) {
             try {
-                DebugData.init(debug_coords_file);
+                messageInLatency = Optional.of(Long.parseUnsignedLong(latency));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        SpringApplication.run(App.class, args);
+        var wrap = System.getenv("SNAKE_DEBUG_WRAP_ON_OUT_OF_BOUNDS");
+        var wrapOnOutOfBounds = wrap != null && wrap.equals("true");
+
+        try {
+            DebugData.init(debugCoordsFile, messageInLatency, wrapOnOutOfBounds);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,5 +1,7 @@
 package com.coopsnakeserver.app.pojo;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.IntoBytes;
 
@@ -17,6 +19,12 @@ public class Coordinate implements IntoBytes {
     public Coordinate(short x, short y) {
         this.x = x;
         this.y = y;
+    }
+
+    public static Coordinate random(short boardSize) {
+        var x = (short) ThreadLocalRandom.current().nextInt(0, boardSize);
+        var y = (short) ThreadLocalRandom.current().nextInt(0, boardSize);
+        return new Coordinate(x, y);
     }
 
     @Override
@@ -39,4 +47,16 @@ public class Coordinate implements IntoBytes {
         return y;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (super.equals(obj)) {
+            return true;
+        }
+
+        if (obj instanceof Coordinate c) {
+            return c.x == this.x && c.y == this.y;
+        }
+
+        return false;
+    }
 }

@@ -16,7 +16,7 @@ public class GameLoop {
             return true;
         }
 
-        state.sendClientUpdates(tickN);
+        state.sendCoordUpdates(tickN);
 
         return false;
     }

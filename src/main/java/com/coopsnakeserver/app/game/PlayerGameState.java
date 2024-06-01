@@ -15,6 +15,7 @@ import com.coopsnakeserver.app.debug.DebugData;
 import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.game.snapshots.SnakeSnapshotHandler;
 import com.coopsnakeserver.app.pojo.Coordinate;
+import com.coopsnakeserver.app.pojo.FoodCoordinate;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.PlayerCoordiantes;
@@ -38,6 +39,7 @@ public class PlayerGameState {
     private ArrayDeque<Coordinate> coords;
     private SnakeDirection direction = SnakeDirection.Right;
     private Optional<PlayerSwipeInput> input = Optional.empty();
+    private Coordinate food;
 
     private boolean gameOverConditionHit = false;
     private int lastTick = 0;
@@ -64,6 +66,8 @@ public class PlayerGameState {
 
         this.snapshotHandler = new SnakeSnapshotHandler((int) GameSession.INPUT_LATENCY_GRACE_PERIOD_TICKS);
         this.snapshotHandler.takeSnapshot(this.coords.clone(), this.direction);
+
+        updateAndSendFood();
     }
 
     /**
@@ -97,7 +101,7 @@ public class PlayerGameState {
         return this.gameOverConditionHit;
     }
 
-    public void sendClientUpdates(int tickN) {
+    public void sendCoordUpdates(int tickN) {
         DevUtils.assertion(tickN == this.lastTick,
                 "tickN doesn't match lastTick. Make sure to call processTick before calling this function!");
 
@@ -159,6 +163,18 @@ public class PlayerGameState {
         this.direction = SnakeDirection.fromSwipeInput(input.getKind());
         this.coords = snapshot.getCoords();
         this.input = Optional.empty();
+    }
+
+    private void updateAndSendFood() {
+        this.food = GameUtils.nextFood(this.coords.stream().toList(), this.session.getBoardSize());
+
+        var foodMsg = new FoodCoordinate(this.player, this.food);
+        var msg = new GameBinaryMessage(GameMessageType.FoodPosition, foodMsg.intoBytes());
+        try {
+            ws.sendMessage(new BinaryMessage(msg.intoBytes()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private PlayerCoordiantes getCurrentPlayerCoords(int tickN) {

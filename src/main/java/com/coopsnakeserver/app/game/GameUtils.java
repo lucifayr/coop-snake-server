@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app.game;
 
 import java.util.ArrayDeque;
+import java.util.List;
 
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.pojo.Coordinate;
@@ -21,6 +22,15 @@ public class GameUtils {
         var outLeft = head.x() < 0;
 
         return outUp || outRight || outDown || outLeft;
+    }
+
+    public static Coordinate nextFood(List<Coordinate> occupied, short boardSize) {
+        var coord = Coordinate.random(boardSize);
+        while (occupied.contains(coord)) {
+            coord = Coordinate.random(boardSize);
+        }
+
+        return coord;
     }
 
     public static Coordinate nextHead(Coordinate head, SnakeDirection direction) {

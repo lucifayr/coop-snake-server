@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -62,18 +63,24 @@ public class GameSession {
         this.p1State = new PlayerGameState(this, session, Player.Player1, token, INITIAL_SNAKE_SIZE);
 
         var future = executor.scheduleWithFixedDelay(() -> {
-            if (!this.gameRunning) {
-                // TODO: graceful teardown
-                return;
-            }
+            try {
+                if (!this.gameRunning) {
+                    // TODO: graceful teardown
+                    return;
+                }
 
-            tickN += 1;
-            var gameOver = GameLoop.tick(this.p1State, tickN);
-            if (gameOver) {
-                this.gameRunning = false;
-                return;
-            }
+                tickN += 1;
+                var gameOver = GameLoop.tick(this.p1State, tickN);
+                if (gameOver) {
+                    this.gameRunning = false;
+                    return;
+                }
+            } catch (Exception e) {
+                var t = Thread.currentThread();
+                t.getUncaughtExceptionHandler().uncaughtException(t, e);
 
+                teardown();
+            }
         }, 0, TICK_RATE_MILLIS, TimeUnit.MILLISECONDS);
 
         this.tickFunc = future;
@@ -84,6 +91,7 @@ public class GameSession {
         this.tickFunc.cancel(true);
 
         System.out.println("Closed 1 session: " + p1State.getConnection().getId());
+        // TODO: uncomment when multiplayer works
         // System.out.println("Closed 2 session: " + p2State.getConnection().getId());
     }
 

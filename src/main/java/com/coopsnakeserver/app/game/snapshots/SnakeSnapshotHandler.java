@@ -19,6 +19,7 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwanter
  */
 public class SnakeSnapshotHandler {
+    // TODO: update this entire API, it is not good
     private int maxSnapshots;
     private ArrayDeque<SnakeSnapshot> snapshots;
 

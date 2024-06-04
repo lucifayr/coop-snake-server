@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -114,6 +113,7 @@ public class GameSession {
         if (validToken.isPresent()) {
             switch (validToken.get()) {
                 case Player1:
+                    GameLoop.processInput(this.p1State, tickN);
                     p1State.setInput(Optional.of(input));
                     break;
                 case Player2:

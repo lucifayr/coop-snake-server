@@ -29,7 +29,6 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class PlayerGameState {
-    private SnakeSnapshotHandler snapshotHandler;
     private GameSession session;
     private WebSocketSession ws;
 
@@ -42,7 +41,6 @@ public class PlayerGameState {
     private Coordinate food;
 
     private boolean gameOverConditionHit = false;
-    private int lastTick = 0;
 
     public PlayerGameState(GameSession parent, WebSocketSession ws, Player player, PlayerToken token,
             short initialSankeSize)
@@ -63,9 +61,6 @@ public class PlayerGameState {
         } else {
             this.direction = SnakeDirection.Right;
         }
-
-        this.snapshotHandler = new SnakeSnapshotHandler((int) GameSession.INPUT_LATENCY_GRACE_PERIOD_TICKS);
-        this.snapshotHandler.takeSnapshot(this.coords.clone(), this.direction);
 
         updateAndSendFood();
     }
@@ -138,31 +133,6 @@ public class PlayerGameState {
 
         this.coords.addFirst(snakeHeadNext);
         this.coords.removeLast();
-    }
-
-    private void processInput(int tickN) {
-        if (this.input.isEmpty()) {
-            return;
-        }
-
-        var input = this.input.get();
-
-        var tickOnClientInput = input.getTickN();
-        var ticksDueToLatencyDelta = tickN - tickOnClientInput;
-        var snapshotAtClientTick = this.snapshotHandler.rewind(ticksDueToLatencyDelta);
-        if (snapshotAtClientTick.isEmpty()) {
-            return;
-        }
-
-        var snapshot = snapshotAtClientTick.get();
-        var swipeIsNoop = input.getKind().isOnSameAxis(snapshot.getDirection().intoSwipeInput());
-        if (swipeIsNoop) {
-            return;
-        }
-
-        this.direction = SnakeDirection.fromSwipeInput(input.getKind());
-        this.coords = snapshot.getCoords();
-        this.input = Optional.empty();
     }
 
     private void updateAndSendFood() {

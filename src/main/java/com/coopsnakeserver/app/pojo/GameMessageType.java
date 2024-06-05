@@ -15,7 +15,8 @@ import com.coopsnakeserver.app.IntoBytes;
 public enum GameMessageType implements IntoBytes {
     PlayerPosition(0),
     PlayerSwipeInput(1),
-    SessionInfo(2);
+    SessionInfo(2),
+    FoodPosition(3);
 
     private final int tag;
 
@@ -30,6 +31,12 @@ public enum GameMessageType implements IntoBytes {
 
             case 1:
                 return Optional.of(GameMessageType.PlayerSwipeInput);
+
+            case 3:
+                return Optional.of(GameMessageType.SessionInfo);
+
+            case 4:
+                return Optional.of(GameMessageType.FoodPosition);
 
             default:
                 return Optional.empty();

@@ -11,7 +11,8 @@ import com.coopsnakeserver.app.IntoBytes;
 public enum SessionInfoType implements IntoBytes {
     SessionKey((byte) 0),
     PlayerToken((byte) 1),
-    BoardSize((byte) 2);
+    BoardSize((byte) 2),
+    GameOver((byte) 3);
 
     private final byte value;
 

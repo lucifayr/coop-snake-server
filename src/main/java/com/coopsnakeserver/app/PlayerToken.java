@@ -42,7 +42,7 @@ public class PlayerToken implements IntoBytes {
 
     public GameBinaryMessage intoMsg() {
         var type = SessionInfoType.PlayerToken;
-        var info = new SessionInfo(type, this.token);
+        var info = new SessionInfo(type, BinaryUtils.int32ToBytes(this.token));
         return new GameBinaryMessage(GameMessageType.SessionInfo, info.intoBytes());
     }
 

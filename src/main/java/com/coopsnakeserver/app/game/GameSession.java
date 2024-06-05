@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -27,16 +28,12 @@ public class GameSession {
     public static int TICKS_PER_SECOND = 8;
     private static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
 
-    private static long INPUT_LATENCY_GRACE_PERIOD_MILLIS = 400;
-    public static long INPUT_LATENCY_GRACE_PERIOD_TICKS = (long) ((double) TICKS_PER_SECOND
-            * ((double) INPUT_LATENCY_GRACE_PERIOD_MILLIS / (double) 1_000));
-
     private static short GAME_BOARD_SIZE = 32;
     private static short INITIAL_SNAKE_SIZE = 3;
 
     private PlayerGameLoop pLoop;
 
-    private int tickN = 0;
+    private int globalTickN = 0;
     private boolean gameRunning = true;
 
     private ScheduledFuture<?> tickFunc;
@@ -60,14 +57,19 @@ public class GameSession {
 
         var future = executor.scheduleWithFixedDelay(() -> {
             try {
-                tickN += 1;
-                var gameOver = pLoop.tick(tickN);
+                this.globalTickN += 1;
+
+                var gameOver = pLoop.tick();
                 if (gameOver) {
                     this.gameRunning = false;
                     return;
                 }
 
-                pLoop.updateWsClients(tickN);
+                pLoop.updateWsClients();
+
+                DevUtils.assertion(pLoop.getCurrentTick() == this.globalTickN,
+                        String.format("Game loop tick is out of sync. Expected to match global %d, but received %d",
+                                this.globalTickN, pLoop.getCurrentTick()));
 
             } catch (Exception e) {
                 var t = Thread.currentThread();

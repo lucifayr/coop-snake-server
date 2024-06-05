@@ -1,13 +1,9 @@
 package com.coopsnakeserver.app.game;
 
-import java.io.IOException;
-import java.util.Optional;
-
 import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.PlayerToken;
-import com.coopsnakeserver.app.game.frame.FrameHandler;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
@@ -23,17 +19,13 @@ public class PlayerGameState {
     private GameSession session;
     private WebSocketSession ws;
 
-    private FrameHandler frameHandler;
-
     private Player player;
     private PlayerToken token;
 
-    public PlayerGameState(GameSession parent, WebSocketSession ws, Player player, PlayerToken token,
-            short initialSankeSize)
-            throws IOException {
-        this.frameHandler = new FrameHandler(
-                (int) GameSession.INPUT_LATENCY_GRACE_PERIOD_TICKS);
+    private PlayerGameFrame canonicalFrame;
 
+    public PlayerGameState(GameSession parent, WebSocketSession ws, Player player, PlayerToken token,
+            short initialSankeSize) {
         this.session = parent;
         this.ws = ws;
         this.player = player;
@@ -43,15 +35,11 @@ public class PlayerGameState {
     }
 
     public void newCanonicalFrame(PlayerGameFrame frame) {
-        this.frameHandler.store(frame);
+        this.canonicalFrame = frame;
     }
 
     public PlayerGameFrame canonicalFrame() {
-        return this.frameHandler.peek();
-    }
-
-    public Optional<PlayerGameFrame> rewindFrames(int ticks) {
-        return this.frameHandler.rewind(ticks);
+        return this.canonicalFrame;
     }
 
     public short getBoardSize() {
@@ -87,6 +75,6 @@ public class PlayerGameState {
         }
 
         var frame = new PlayerGameFrame(snakeCoords, snakeDirection, foodCoord);
-        frameHandler.store(frame);
+        this.canonicalFrame = frame;
     }
 }

@@ -17,10 +17,6 @@ import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.PlayerCoordiantes;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
 
-// Note to self: every time canonicalFrame() is called, the entire frame is
-// copied. It's a lot easier to manage mutations that way, but if RAM/CPU usage
-// is too heavy, this should be checked ASAP.
-
 /**
  * PlayerGameLoop
  *
@@ -29,8 +25,11 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class PlayerGameLoop {
-    PlayerGameState state;
+    private PlayerGameState state;
     private ArrayDeque<PlayerSwipeInput> swipeInputQueue = new ArrayDeque<>();
+    private int tickN = 0;
+
+    private int ticksToPlayForward = 0;
 
     public PlayerGameLoop(PlayerGameState state) {
         this.state = state;
@@ -43,20 +42,31 @@ public class PlayerGameLoop {
     // return new PlayerCoordiantes(this.player, tickN, coords);
     // }
 
-    public boolean tick(int tickN) {
-        var newSnakeDirection = processSwipeInput(tickN);
-        var snakeInfo = nextSnakeInfo(newSnakeDirection);
+    public boolean tick() {
+        this.tickN += 1;
+        var newSnakeDirection = processSwipeInput();
 
-        var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
+        var extraTicks = 0;
+        for (var i = 0; i <= this.ticksToPlayForward; i++) {
+            extraTicks = i;
+
+            var snakeInfo = nextSnakeInfo(newSnakeDirection);
+            var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
+            var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
+
+            this.state.newCanonicalFrame(frame);
+        }
+
+        this.tickN += extraTicks;
+        this.ticksToPlayForward = 0;
 
         // TODO: handle game over
-        var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
-        this.state.newCanonicalFrame(frame);
 
         return false;
+
     }
 
-    public void updateWsClients(int tickN) throws IOException {
+    public void updateWsClients() throws IOException {
         var frame = this.state.canonicalFrame();
 
         var foodCoord = new FoodCoordinate(this.state.getPlayer(), frame.getFoodCoord());
@@ -66,7 +76,7 @@ public class PlayerGameLoop {
         var coords = new Coordinate[frame.getSnakeCoords().size()];
         frame.getSnakeCoords().toArray(coords);
 
-        var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), tickN, coords);
+        var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), this.tickN, coords);
         var playerMsg = new GameBinaryMessage(GameMessageType.PlayerPosition, playerCoords.intoBytes());
         var playerMsgBin = new BinaryMessage(playerMsg.intoBytes());
 
@@ -79,20 +89,27 @@ public class PlayerGameLoop {
         swipeInputQueue.addLast(input);
     }
 
-    private Optional<SnakeDirection> processSwipeInput(int tickN) {
+    public int getCurrentTick() {
+        return this.tickN;
+    }
+
+    private Optional<SnakeDirection> processSwipeInput() {
         var input = this.swipeInputQueue.pollFirst();
         if (input == null) {
             return Optional.empty();
         }
 
         var tickOnClientInput = input.getTickN();
-        var ticksDueToLatencyDelta = tickN - tickOnClientInput;
-        var frameAtClientTick = this.state.rewindFrames(ticksDueToLatencyDelta);
-        if (frameAtClientTick.isEmpty()) {
+        var ticksDueToLatencyDelta = this.tickN - tickOnClientInput;
+        if (ticksDueToLatencyDelta < 0) {
             return Optional.empty();
         }
 
-        var frame = frameAtClientTick.get();
+        if ((double) ticksDueToLatencyDelta / (double) GameSession.TICKS_PER_SECOND > 0.3) {
+            System.out.println("WARNING: latency is very high. delay in ticks = " + ticksDueToLatencyDelta);
+        }
+
+        var frame = this.state.canonicalFrame();
         var swipeIsNoop = input.getKind().isOnSameAxis(frame.getSnakeDirection().intoSwipeInput());
         if (swipeIsNoop) {
             return Optional.empty();

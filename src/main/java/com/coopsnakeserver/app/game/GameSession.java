@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
@@ -33,7 +34,6 @@ public class GameSession {
 
     private PlayerGameLoop pLoop;
 
-    private int globalTickN = 0;
     private boolean gameRunning = true;
 
     private ScheduledFuture<?> tickFunc;
@@ -47,7 +47,7 @@ public class GameSession {
         var tokenMsg = new BinaryMessage(token.intoMsg().intoBytes());
         session.sendMessage(tokenMsg);
 
-        var boardInfo = new SessionInfo(SessionInfoType.BoardSize, GAME_BOARD_SIZE);
+        var boardInfo = new SessionInfo(SessionInfoType.BoardSize, BinaryUtils.int32ToBytes((int) GAME_BOARD_SIZE));
         var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
         session.sendMessage(boardInfoMsgBin);
@@ -57,20 +57,16 @@ public class GameSession {
 
         var future = executor.scheduleWithFixedDelay(() -> {
             try {
-                this.globalTickN += 1;
-
                 var gameOver = pLoop.tick();
-                if (gameOver) {
+                if (gameOver.isPresent()) {
                     this.gameRunning = false;
+                    notifyGameOver(gameOver.get());
+                    teardown();
+
                     return;
                 }
 
                 pLoop.updateWsClients();
-
-                DevUtils.assertion(pLoop.getCurrentTick() == this.globalTickN,
-                        String.format("Game loop tick is out of sync. Expected to match global %d, but received %d",
-                                this.globalTickN, pLoop.getCurrentTick()));
-
             } catch (Exception e) {
                 var t = Thread.currentThread();
                 t.getUncaughtExceptionHandler().uncaughtException(t, e);
@@ -80,7 +76,14 @@ public class GameSession {
         }, 0, TICK_RATE_MILLIS, TimeUnit.MILLISECONDS);
 
         this.tickFunc = future;
-        System.out.println("Created session: " + session.getId());
+        System.out.println("Connection opened: " + session.getId());
+    }
+
+    public void notifyGameOver(GameOverCause cause) throws IOException {
+        var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, cause.intoBytes());
+        var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo, gameOverMsg.intoBytes());
+
+        this.pLoop.getConnection().sendMessage(new BinaryMessage(gameOverMsgBin.intoBytes()));
     }
 
     public void teardown() {

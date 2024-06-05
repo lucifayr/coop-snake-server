@@ -24,6 +24,17 @@ public class GameUtils {
         return outUp || outRight || outDown || outLeft;
     }
 
+    public static boolean headSelfCollision(Coordinate head, List<Coordinate> bodyAndHead) {
+        for (var i = 1; i < bodyAndHead.size(); i++) {
+            var segment = bodyAndHead.get(i);
+            if (head.equals(segment)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Find a non-occupied coordinate to place new food on. Prefers placing food
      * far away from the player/snake head.
@@ -96,18 +107,16 @@ public class GameUtils {
         var y0 = boardSize / 2 + yOffset;
 
         var c0 = new Coordinate((short) x0, (short) y0);
-        coords.addLast(c0);
+        coords.addFirst(c0);
 
         for (var i = 1; i < snakeSize; i++) {
-            var x = 0;
+            var x = x0 + i;
             if (goLeft) {
                 x = x0 - i;
-            } else {
-                x = x0 + i;
             }
 
             var c = new Coordinate((short) x, (short) y0);
-            coords.addLast(c);
+            coords.addFirst(c);
         }
 
         return coords;

@@ -5,6 +5,7 @@ import java.util.ArrayDeque;
 import java.util.Optional;
 
 import org.springframework.web.socket.BinaryMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
@@ -27,9 +28,8 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
 public class PlayerGameLoop {
     private PlayerGameState state;
     private ArrayDeque<PlayerSwipeInput> swipeInputQueue = new ArrayDeque<>();
-    private int tickN = 0;
 
-    private int ticksToPlayForward = 0;
+    private int tickN = 0;
 
     public PlayerGameLoop(PlayerGameState state) {
         this.state = state;
@@ -42,27 +42,25 @@ public class PlayerGameLoop {
     // return new PlayerCoordiantes(this.player, tickN, coords);
     // }
 
-    public boolean tick() {
+    public Optional<GameOverCause> tick() {
         this.tickN += 1;
+
         var newSnakeDirection = processSwipeInput();
+        var snakeInfo = nextSnakeInfo(newSnakeDirection);
 
-        var extraTicks = 0;
-        for (var i = 0; i <= this.ticksToPlayForward; i++) {
-            extraTicks = i;
-
-            var snakeInfo = nextSnakeInfo(newSnakeDirection);
-            var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
-            var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
-
-            this.state.newCanonicalFrame(frame);
+        if (GameUtils.headOutOfBounds(snakeInfo.coords().getFirst(), this.state.getBoardSize())) {
+            return Optional.of(GameOverCause.CollisionBounds);
         }
 
-        this.tickN += extraTicks;
-        this.ticksToPlayForward = 0;
+        if (GameUtils.headSelfCollision(snakeInfo.coords().getFirst(), snakeInfo.coords().stream().toList())) {
+            return Optional.of(GameOverCause.CollisionSelf);
+        }
 
-        // TODO: handle game over
+        var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
+        var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
+        this.state.newCanonicalFrame(frame);
 
-        return false;
+        return Optional.empty();
 
     }
 
@@ -89,8 +87,8 @@ public class PlayerGameLoop {
         swipeInputQueue.addLast(input);
     }
 
-    public int getCurrentTick() {
-        return this.tickN;
+    public WebSocketSession getConnection() {
+        return this.state.getConnection();
     }
 
     private Optional<SnakeDirection> processSwipeInput() {
@@ -148,18 +146,6 @@ public class PlayerGameLoop {
         var newCoord = GameUtils.findFoodCoord(snakeCoords.getFirst(), snakeCoords.stream().toList(),
                 this.state.getBoardSize());
         return newCoord;
-    }
-
-    // TODO:
-    private boolean isOutOfBounds(Coordinate snakeHead) {
-        return false;
-
-        // var isOutOfBounds = GameUtils.headOutOfBounds(snakeHeadNext,
-        // this.session.getBoardSize());
-        // if (isOutOfBounds) {
-        // this.gameOverConditionHit = true;
-        // return;
-        // }
     }
 
     private boolean isEatingFood(Coordinate snakeHead) {

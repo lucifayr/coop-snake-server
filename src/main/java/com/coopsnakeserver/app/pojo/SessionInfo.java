@@ -11,16 +11,16 @@ import com.coopsnakeserver.app.IntoBytes;
  */
 public class SessionInfo implements IntoBytes {
     private SessionInfoType type;
-    private int value;
+    private byte[] value;
 
-    public SessionInfo(SessionInfoType infoType, int value) {
+    public SessionInfo(SessionInfoType infoType, byte[] value) {
         this.type = infoType;
         this.value = value;
     }
 
     @Override
     public byte[] intoBytes() {
-        return BinaryUtils.concat(this.type.intoBytes(), BinaryUtils.int32ToBytes(this.value));
+        return BinaryUtils.concat(this.type.intoBytes(), this.value);
     }
 
     @Override

@@ -24,7 +24,7 @@ import com.coopsnakeserver.app.pojo.SessionInfoType;
  * @author June L. Gschwantner
  */
 public class GameSession {
-    public static int TICKS_PER_SECOND = 16;
+    public static int TICKS_PER_SECOND = 8;
     private static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
 
     private static long INPUT_LATENCY_GRACE_PERIOD_MILLIS = 400;

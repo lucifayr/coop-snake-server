@@ -128,7 +128,8 @@ public class PlayerGameLoop {
             return lastFrame.getFoodCoord();
         }
 
-        var newCoord = GameUtils.nextFood(snakeCoords.stream().toList(), this.state.getBoardSize());
+        var newCoord = GameUtils.findFoodCoord(snakeCoords.getFirst(), snakeCoords.stream().toList(),
+                this.state.getBoardSize());
         return newCoord;
     }
 
@@ -144,16 +145,10 @@ public class PlayerGameLoop {
         // }
     }
 
-    // TODO:
     private boolean isEatingFood(Coordinate snakeHead) {
-        return false;
-
-        // var isOutOfBounds = GameUtils.headOutOfBounds(snakeHeadNext,
-        // this.session.getBoardSize());
-        // if (isOutOfBounds) {
-        // this.gameOverConditionHit = true;
-        // return;
-        // }
+        var lastFrame = this.state.canonicalFrame();
+        var foodCoord = lastFrame.getFoodCoord();
+        return foodCoord.equals(snakeHead);
     }
 
     // private boolean isCollidingWithOtherSnake() {}

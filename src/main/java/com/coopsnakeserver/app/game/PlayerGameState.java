@@ -78,7 +78,8 @@ public class PlayerGameState {
         var goLeft = yOffset % 2 == 0;
 
         var snakeCoords = GameUtils.initialCoords(initialSankeSize, session.getBoardSize(), yOffset, goLeft);
-        var foodCoord = GameUtils.nextFood(snakeCoords.stream().toList(), this.session.getBoardSize());
+        var foodCoord = GameUtils.findFoodCoord(snakeCoords.getFirst(), snakeCoords.stream().toList(),
+                this.session.getBoardSize());
 
         var snakeDirection = SnakeDirection.Right;
         if (goLeft) {

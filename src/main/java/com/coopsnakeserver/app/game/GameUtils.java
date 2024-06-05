@@ -24,10 +24,27 @@ public class GameUtils {
         return outUp || outRight || outDown || outLeft;
     }
 
-    public static Coordinate nextFood(List<Coordinate> occupied, short boardSize) {
-        var coord = Coordinate.random(boardSize);
+    /**
+     * Find a non-occupied coordinate to place new food on. Prefers placing food
+     * far away from the player/snake head.
+     *
+     * @param occupied  Coordinates taken up by snake segments.
+     * @param boardSize The size of the game board.
+     * @return A non-occupied coordinate that food can be placed on.
+     */
+    public static Coordinate findFoodCoord(Coordinate snakeHead, List<Coordinate> occupied, short boardSize) {
+        var clusterCount = 2;
+        var clusterSize = (short) (boardSize / clusterCount);
+        var maxIdx = boardSize / clusterSize - 1;
+
+        var clusterIdxX = snakeHead.x() / clusterSize;
+        var clusterIdxY = snakeHead.y() / clusterSize;
+        var clusterX = (short) ((maxIdx - clusterIdxX) * clusterSize);
+        var clusterY = (short) ((maxIdx - clusterIdxY) * clusterSize);
+
+        var coord = Coordinate.randomWeighted(0.8f, boardSize, clusterSize, clusterX, clusterY);
         while (occupied.contains(coord)) {
-            coord = Coordinate.random(boardSize);
+            coord = Coordinate.randomWeighted(0.8f, boardSize, clusterSize, clusterX, clusterY);
         }
 
         return coord;

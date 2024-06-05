@@ -10,5 +10,6 @@ package com.coopsnakeserver.app.debug;
 public enum DebugFlag {
     PlayerCoordinateDataFromFile,
     MessageInputLatency,
+    RecordFrames,
     WrapAroundOnOutOfBounds;
 }

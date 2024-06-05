@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.BinaryUtils;
-import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -32,13 +32,15 @@ public class GameSession {
     private static short GAME_BOARD_SIZE = 32;
     private static short INITIAL_SNAKE_SIZE = 3;
 
-    private PlayerGameLoop pLoop;
-
+    private int sessionKey;
     private boolean gameRunning = true;
 
+    private PlayerGameLoop pLoop;
     private ScheduledFuture<?> tickFunc;
 
     public GameSession() {
+        // TODO: validate that the key is unique
+        this.sessionKey = ThreadLocalRandom.current().nextInt(0, 100_000);
         System.out.println("Created new session");
     }
 
@@ -105,6 +107,10 @@ public class GameSession {
     private void handleInput(GameBinaryMessage msg) {
         var input = PlayerSwipeInput.fromBytes(msg.getData());
         pLoop.registerSwipeInput(input);
+    }
+
+    public int getKey() {
+        return this.sessionKey;
     }
 
     public short getBoardSize() {

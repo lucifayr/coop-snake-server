@@ -1,16 +1,24 @@
 package com.coopsnakeserver.app.pojo;
 
+import com.coopsnakeserver.app.IntoBytes;
+
 /**
  *
  * created: 30.05.2024
  *
  * @author June L. Gschwantner
  */
-public enum SnakeDirection {
-    Up,
-    Right,
-    Down,
-    Left;
+public enum SnakeDirection implements IntoBytes {
+    Up((byte) 0),
+    Right((byte) 1),
+    Down((byte) 2),
+    Left((byte) 3);
+
+    private final byte value;
+
+    private SnakeDirection(byte value) {
+        this.value = value;
+    }
 
     public SwipeInputKind intoSwipeInput() {
         switch (this) {
@@ -40,5 +48,10 @@ public enum SnakeDirection {
             default:
                 return SnakeDirection.Up;
         }
+    }
+
+    @Override
+    public byte[] intoBytes() {
+        return new byte[] { this.value };
     }
 }

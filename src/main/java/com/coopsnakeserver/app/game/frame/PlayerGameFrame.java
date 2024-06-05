@@ -3,6 +3,8 @@ package com.coopsnakeserver.app.game.frame;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
+import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.IntoBytes;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
 
@@ -13,7 +15,7 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  *
  * @author June L. Gschwantner
  */
-public class PlayerGameFrame {
+public class PlayerGameFrame implements IntoBytes {
     private ArrayDeque<Coordinate> snakeCoords;
     private SnakeDirection snakeDirection;
     private Coordinate foodCoord;
@@ -22,14 +24,6 @@ public class PlayerGameFrame {
         this.snakeCoords = snakeCoords;
         this.snakeDirection = snakeDirection;
         this.foodCoord = foodCoord;
-    }
-
-    public PlayerGameFrame copy() {
-        var snakeCoords = this.snakeCoords.clone();
-        var snakeDirection = this.snakeDirection;
-        var foodCoord = new Coordinate(this.foodCoord.x(), this.foodCoord.y());
-
-        return new PlayerGameFrame(snakeCoords, snakeDirection, foodCoord);
     }
 
     public ArrayDeque<Coordinate> getSnakeCoords() {
@@ -50,5 +44,20 @@ public class PlayerGameFrame {
                 "\tfood  : coord = %s" +
                 "\tsnake : direction = %s, coords = %s",
                 foodCoord, snakeDirection.name(), Arrays.toString(snakeCoords.toArray()));
+    }
+
+    @Override
+    public byte[] intoBytes() {
+        var foodCordBytes = foodCoord.intoBytes(); // 4 bytes
+        var snakeDirectionByte = snakeDirection.intoBytes(); // 1 byte
+
+        var snakeCoordsArr = new Coordinate[snakeCoords.size()];
+        snakeCoords.toArray(snakeCoordsArr);
+        var snakeCoordBytes = BinaryUtils.iteratorToBytes(snakeCoordsArr);
+
+        var len = foodCordBytes.length + snakeDirectionByte.length + snakeCoordBytes.length;
+        var lenBytes = BinaryUtils.int32ToBytes(len);
+
+        return BinaryUtils.concat(lenBytes, foodCordBytes, snakeDirectionByte, snakeCoordBytes);
     }
 }

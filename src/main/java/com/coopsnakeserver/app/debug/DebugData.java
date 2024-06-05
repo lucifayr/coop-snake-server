@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Coordinate;
+import com.coopsnakeserver.app.pojo.Player;
 
 /**
  * DebugData
@@ -21,12 +24,12 @@ public class DebugData {
     private final ByteBuffer DEBUG_PLAYER_COORDS;
     private final Long DEBUG_MESSAGE_IN_LATENCY;
 
+    private final HashMap<Integer, DebugFrameRecorder> frameRecorders = new HashMap<>();
     private final HashSet<DebugFlag> enabledFlags = new HashSet<>();
-
     private static DebugData INSTANCE;
 
-    private DebugData(Optional<String> debugCoordDataFile, Optional<Long> messsageInLatency,
-            boolean wrapOnOutOfBounds) throws IOException {
+    private DebugData(Optional<String> debugCoordDataFile, Optional<Long> messageInLatency,
+            boolean wrapOnOutOfBounds, boolean recordFrames) throws IOException {
         if (debugCoordDataFile.isPresent()) {
             this.enabledFlags.add(DebugFlag.PlayerCoordinateDataFromFile);
             this.DEBUG_PLAYER_COORDS = ByteBuffer.wrap(this.getClass().getResourceAsStream(debugCoordDataFile.get())
@@ -37,9 +40,9 @@ public class DebugData {
             this.DEBUG_PLAYER_COORDS = null;
         }
 
-        if (messsageInLatency.isPresent()) {
+        if (messageInLatency.isPresent()) {
             this.enabledFlags.add(DebugFlag.MessageInputLatency);
-            this.DEBUG_MESSAGE_IN_LATENCY = messsageInLatency.get();
+            this.DEBUG_MESSAGE_IN_LATENCY = messageInLatency.get();
         } else {
             this.DEBUG_MESSAGE_IN_LATENCY = null;
         }
@@ -47,15 +50,46 @@ public class DebugData {
         if (wrapOnOutOfBounds) {
             this.enabledFlags.add(DebugFlag.WrapAroundOnOutOfBounds);
         }
+
+        if (recordFrames) {
+            this.enabledFlags.add(DebugFlag.RecordFrames);
+        }
     }
 
-    public static void init(Optional<String> debugCoordDataFile, Optional<Long> messsageInLatency,
-            boolean wrapOnOutOfBounds) throws IOException {
-        if (INSTANCE != null) {
+    public static void initFromEnv() {
+        var debug = System.getenv("SNAKE_DEBUG");
+        var debugEnabled = debug == null || !debug.equals("true");
+        if (INSTANCE != null || debugEnabled) {
             return;
         }
 
-        INSTANCE = new DebugData(debugCoordDataFile, messsageInLatency, wrapOnOutOfBounds);
+        Optional<String> debugCoordsFile = Optional.empty();
+        var path = System.getenv("SNAKE_DEBUG_COORDS_FILE");
+        if (path != null) {
+            debugCoordsFile = Optional.of("/debug/" + path);
+        }
+
+        Optional<Long> messageInLatency = Optional.empty();
+        var latency = System.getenv("SNAKE_DEBUG_MSG_IN_LATENCY");
+        if (latency != null) {
+            try {
+                messageInLatency = Optional.of(Long.parseUnsignedLong(latency));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        var wrapEnv = System.getenv("SNAKE_DEBUG_WRAP_ON_OUT_OF_BOUNDS");
+        var wrapOnOutOfBounds = wrapEnv != null && wrapEnv.equals("true");
+
+        var recordEnv = System.getenv("SNAKE_DEBUG_RECORD_FRAMES");
+        var recordFrames = recordEnv != null && recordEnv.equals("true");
+
+        try {
+            INSTANCE = new DebugData(debugCoordsFile, messageInLatency, wrapOnOutOfBounds, recordFrames);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static DebugData instance() {
@@ -68,6 +102,20 @@ public class DebugData {
         }
 
         return INSTANCE.enabledFlags.contains(flag);
+    }
+
+    public static void recordIfEnabled(int sessionKey, Player player, PlayerGameFrame frame) {
+        if (INSTANCE == null || !INSTANCE.enabledFlags.contains(DebugFlag.RecordFrames)) {
+            return;
+        }
+
+        var recorder = INSTANCE.frameRecorders.get(sessionKey);
+        if (recorder == null) {
+            recorder = new DebugFrameRecorder(sessionKey);
+            INSTANCE.frameRecorders.put(sessionKey, recorder);
+        }
+
+        recorder.record(player, frame);
     }
 
     public Long messageInLatency() {

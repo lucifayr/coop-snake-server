@@ -1,3 +1,4 @@
 target
 .classpath
 .factorypath
+src/main/resources/debug/recordings

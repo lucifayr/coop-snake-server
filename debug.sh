@@ -1,6 +1,7 @@
 coords_file="$1"
 msg_in_latency="$2"
 wrap_on_out_of_bounds="$3"
+record_frames="$4"
 
 export SNAKE_DEBUG=true
 
@@ -21,14 +22,24 @@ else
 fi
 
 if [ ! -z "$wrap_on_out_of_bounds" ]; then
-    printf "-> wrap around when out of bounds => true\n"
+    printf "-> wrap around when out of bounds => $wrap_on_out_of_bounds\n"
     export SNAKE_DEBUG_WRAP_ON_OUT_OF_BOUNDS="$wrap_on_out_of_bounds"
 else
     printf "-> wrap around when out of bounds => false\n"
     unset SNAKE_DEBUG_WRAP_ON_OUT_OF_BOUNDS
 fi
 
-if [ -z "$coords_file" ] && [ -z "$msg_in_latency" ] && [ -z "$wrap_on_out_of_bounds" ]; then
+if [ ! -z "$record_frames" ]; then
+    printf "-> record frames => $record_frames\n"
+    export SNAKE_DEBUG_RECORD_FRAMES="$wrap_on_out_of_bounds"
+else
+    printf "-> record frames => false\n"
+    unset SNAKE_DEBUG_RECORD_FRAMES
+fi
+
+
+
+if [ -z "$coords_file" ] && [ -z "$msg_in_latency" ] && [ -z "$wrap_on_out_of_bounds" ] && [ -z "$record_frames" ]; then
     printf "Debug mode disabled\n"
     unset SNAKE_DEBUG
 fi

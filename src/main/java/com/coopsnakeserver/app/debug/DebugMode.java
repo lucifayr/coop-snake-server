@@ -175,7 +175,7 @@ public class DebugMode {
         recorder.record(player, frame);
     }
 
-    public PlayerGameFrame playback(int sessionKey, Player player) {
+    public Optional<PlayerGameFrame> playback(int sessionKey, Player player) {
         var playback = INSTANCE.framePlayers.get(sessionKey);
         if (playback == null) {
             playback = new DebugFramePlayer(sessionKey);

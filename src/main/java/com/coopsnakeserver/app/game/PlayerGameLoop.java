@@ -35,20 +35,15 @@ public class PlayerGameLoop {
         this.state = state;
     }
 
-    // TODO: handle debug frame replay
-    // if (DebugData.instanceHasFlag(DebugFlag.PlayerCoordinateDataFromFile)) {
-    // var coords = DebugData.instance().nextDebugCoords().orElseGet(() -> new
-    // Coordinate[0]);
-    // return new PlayerCoordiantes(this.player, tickN, coords);
-    // }
-
     public Optional<GameOverCause> tick() {
         this.tickN += 1;
 
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
             var frame = DebugMode.instance().playback(state.getSessionKey(), state.getPlayer());
-            this.state.newCanonicalFrame(frame);
-            return Optional.empty();
+            if (frame.isPresent()) {
+                this.state.newCanonicalFrame(frame.get());
+                return Optional.empty();
+            }
         }
 
         var newSnakeDirection = processSwipeInput();

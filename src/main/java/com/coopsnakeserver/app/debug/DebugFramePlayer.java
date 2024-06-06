@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.Optional;
 
 import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
@@ -25,12 +26,11 @@ public class DebugFramePlayer {
         this.sessionKey = sessionKey;
     }
 
-    public PlayerGameFrame playback(Player player) {
+    public Optional<PlayerGameFrame> playback(Player player) {
         try {
-            return playbackActual(player);
+            return Optional.of(playbackActual(player));
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            return Optional.empty();
         }
     }
 

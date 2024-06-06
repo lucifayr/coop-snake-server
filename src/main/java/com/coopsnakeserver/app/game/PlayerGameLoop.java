@@ -15,6 +15,7 @@ import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.FoodCoordinate;
 import com.coopsnakeserver.app.pojo.GameMessageType;
+import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.PlayerCoordiantes;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
 
@@ -31,6 +32,9 @@ public class PlayerGameLoop {
 
     private int tickN = 0;
 
+    private Optional<Integer> debugSessionKey = Optional.empty();
+    private Optional<Player> debugPlayer = Optional.empty();
+
     public PlayerGameLoop(PlayerGameState state) {
         this.state = state;
     }
@@ -39,7 +43,10 @@ public class PlayerGameLoop {
         this.tickN += 1;
 
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
-            var frame = DebugMode.instance().playback(state.getSessionKey(), state.getPlayer());
+            var sessionKey = this.debugSessionKey.orElseGet(() -> this.state.getSessionKey());
+            var player = this.debugPlayer.orElseGet(() -> this.state.getPlayer());
+            var frame = DebugMode.instance().playback(sessionKey, player);
+
             if (frame.isPresent()) {
                 this.state.newCanonicalFrame(frame.get());
                 return Optional.empty();
@@ -92,6 +99,11 @@ public class PlayerGameLoop {
 
     public WebSocketSession getConnection() {
         return this.state.getConnection();
+    }
+
+    public void enableDebugFrameReplay(int sessionKey, Player player) {
+        this.debugSessionKey = Optional.of(sessionKey);
+        this.debugPlayer = Optional.of(player);
     }
 
     private Optional<SnakeDirection> processSwipeInput() {

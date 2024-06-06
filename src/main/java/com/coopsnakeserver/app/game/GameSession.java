@@ -14,6 +14,7 @@ import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
+import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SessionInfo;
@@ -118,4 +119,7 @@ public class GameSession {
         return GAME_BOARD_SIZE;
     }
 
+    public void enableDebugFrameReplay(int sessionKey, Player player) {
+        this.pLoop.enableDebugFrameReplay(sessionKey, player);
+    }
 }

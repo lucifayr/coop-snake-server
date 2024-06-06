@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.web.socket.BinaryMessage;
@@ -14,7 +13,6 @@ import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
-import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SessionInfo;
@@ -56,7 +54,7 @@ public class GameSession {
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
         session.sendMessage(boardInfoMsgBin);
 
-        var state = new PlayerGameState(this, session, Player.Player1, token, INITIAL_SNAKE_SIZE);
+        var state = new PlayerGameState(this, session, new Player((byte) 1), token, INITIAL_SNAKE_SIZE);
         this.pLoop = new PlayerGameLoop(state);
 
         var future = executor.scheduleWithFixedDelay(() -> {

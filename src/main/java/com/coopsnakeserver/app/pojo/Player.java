@@ -8,13 +8,10 @@ import com.coopsnakeserver.app.IntoBytes;
  *
  * @author June L. Gschwantner
  */
-public enum Player implements IntoBytes {
-    Player1((byte) 1),
-    Player2((byte) 2);
-
+public class Player implements IntoBytes {
     private final byte value;
 
-    private Player(byte id) {
+    public Player(byte id) {
         this.value = id;
     }
 
@@ -29,13 +26,19 @@ public enum Player implements IntoBytes {
 
     @Override
     public String toString() {
-        switch (this.value) {
-            case 1:
-                return "Player 1";
-            case 2:
-                return "Player 2";
-            default:
-                return "Invalid Player";
+        return String.format("Player %02d", this.value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (super.equals(obj)) {
+            return true;
         }
+
+        if (obj instanceof Player p) {
+            return p.value == this.value;
+        }
+
+        return false;
     }
 }

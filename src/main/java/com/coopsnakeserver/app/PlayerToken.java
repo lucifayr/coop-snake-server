@@ -1,9 +1,8 @@
 package com.coopsnakeserver.app;
 
 import java.security.SecureRandom;
+import java.util.Map;
 import java.util.Optional;
-
-import org.springframework.web.socket.TextMessage;
 
 import com.coopsnakeserver.app.pojo.SessionInfoType;
 import com.coopsnakeserver.app.pojo.GameMessageType;
@@ -46,21 +45,30 @@ public class PlayerToken implements IntoBytes {
         return new GameBinaryMessage(GameMessageType.SessionInfo, info.intoBytes());
     }
 
-    public Optional<Player> tokenOwner(PlayerToken p1Token, PlayerToken p2Token) {
-        DevUtils.assertion(p1Token.token != p2Token.token, "PlayerTokens shouldn't be the same.");
-        if (this.token == p1Token.token) {
-            return Optional.of(Player.Player1);
+    public Optional<Player> tokenOwner(Map<PlayerToken, Player> tokens) {
+        var player = tokens.get(this);
+        if (player == null) {
+            return Optional.empty();
         }
 
-        if (this.token == p2Token.token) {
-            return Optional.of(Player.Player2);
-        }
-
-        return Optional.empty();
+        return Optional.of(player);
     }
 
     @Override
     public byte[] intoBytes() {
         return BinaryUtils.int32ToBytes(this.token);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (super.equals(obj)) {
+            return true;
+        }
+
+        if (obj instanceof PlayerToken pt) {
+            return pt.token == this.token;
+        }
+
+        return false;
     }
 }

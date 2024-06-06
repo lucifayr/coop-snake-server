@@ -8,8 +8,8 @@ package com.coopsnakeserver.app.debug;
  * @author June L. Gschwantner
  */
 public enum DebugFlag {
-    PlayerCoordinateDataFromFile,
-    MessageInputLatency,
+    PlaybackFrames,
     RecordFrames,
+    MessageInputLatency,
     WrapAroundOnOutOfBounds;
 }

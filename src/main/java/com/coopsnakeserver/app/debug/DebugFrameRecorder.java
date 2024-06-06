@@ -13,6 +13,10 @@ import com.coopsnakeserver.app.pojo.Player;
 
 /**
  * DebugFrameRecorder
+ *
+ * created: 05.06.2024
+ *
+ * @author June L. Gschwantner
  */
 public class DebugFrameRecorder {
     private final int sessionKey;
@@ -32,6 +36,15 @@ public class DebugFrameRecorder {
         }
     }
 
+    public void recordGameOver() {
+        try {
+            recordGameOverActual();
+        } catch (Exception e) {
+            System.out.println(String.format("failed to record game over in session %s", this.sessionKey));
+            e.printStackTrace();
+        }
+    }
+
     private void recordActual(Player player, PlayerGameFrame frame) throws IOException, FileNotFoundException {
         var dirPath = String.format("src/main/resources/debug/recordings/%06d", this.sessionKey);
         Files.createDirectories(Paths.get(dirPath));
@@ -47,5 +60,11 @@ public class DebugFrameRecorder {
         }
 
         stream.write(frame.intoBytes());
+    }
+
+    private void recordGameOverActual() throws IOException {
+        for (var stream : recordingStreams.values()) {
+            stream.write(new byte[] { 0, 0, 0, 0 });
+        }
     }
 }

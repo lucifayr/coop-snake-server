@@ -45,14 +45,22 @@ public class PlayerGameLoop {
     public Optional<GameOverCause> tick() {
         this.tickN += 1;
 
+        if (DebugData.instanceHasFlag(DebugFlag.PlaybackFrames)) {
+            var frame = DebugData.instance().playback(state.getSessionKey(), state.getPlayer());
+            this.state.newCanonicalFrame(frame);
+            return Optional.empty();
+        }
+
         var newSnakeDirection = processSwipeInput();
         var snakeInfo = nextSnakeInfo(newSnakeDirection);
 
         if (GameUtils.headOutOfBounds(snakeInfo.coords().getFirst(), this.state.getBoardSize())) {
+            DebugData.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionBounds);
         }
 
         if (GameUtils.headSelfCollision(snakeInfo.coords().getFirst(), snakeInfo.coords().stream().toList())) {
+            DebugData.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionSelf);
         }
 

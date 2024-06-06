@@ -70,6 +70,10 @@ public class PlayerGameState {
         return this.token;
     }
 
+    public int getSessionKey() {
+        return this.session.getKey();
+    }
+
     public Player getPlayer() {
         return this.player;
     }

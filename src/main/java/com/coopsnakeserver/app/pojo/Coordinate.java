@@ -1,5 +1,6 @@
 package com.coopsnakeserver.app.pojo;
 
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.coopsnakeserver.app.BinaryUtils;
@@ -45,7 +46,18 @@ public class Coordinate implements IntoBytes {
             var y = (short) ThreadLocalRandom.current().nextInt(0, boardSize);
             return new Coordinate(x, y);
         }
+    }
 
+    public static Coordinate fromBytes(byte[] bytes) {
+        DevUtils.assertion(bytes.length == 4,
+                "Expected 4 byte long array for coordinate. Received bytes " + Arrays.toString(bytes));
+
+        var xBytes = Arrays.copyOfRange(bytes, 0, 2);
+        var yBytes = Arrays.copyOfRange(bytes, 2, 4);
+        var x = BinaryUtils.bytesToInt16(xBytes);
+        var y = BinaryUtils.bytesToInt16(yBytes);
+
+        return new Coordinate(x, y);
     }
 
     @Override

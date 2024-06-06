@@ -1,16 +1,12 @@
 package com.coopsnakeserver.app.debug;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
-import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
-import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.Player;
 
 /**
@@ -21,25 +17,16 @@ import com.coopsnakeserver.app.pojo.Player;
  * @author June L. Gschwantner
  */
 public class DebugData {
-    private final ByteBuffer DEBUG_PLAYER_COORDS;
     private final Long DEBUG_MESSAGE_IN_LATENCY;
 
+    private final HashMap<Integer, DebugFramePlayer> framePlayers = new HashMap<>();
     private final HashMap<Integer, DebugFrameRecorder> frameRecorders = new HashMap<>();
     private final HashSet<DebugFlag> enabledFlags = new HashSet<>();
+
     private static DebugData INSTANCE;
 
-    private DebugData(Optional<String> debugCoordDataFile, Optional<Long> messageInLatency,
-            boolean wrapOnOutOfBounds, boolean recordFrames) throws IOException {
-        if (debugCoordDataFile.isPresent()) {
-            this.enabledFlags.add(DebugFlag.PlayerCoordinateDataFromFile);
-            this.DEBUG_PLAYER_COORDS = ByteBuffer.wrap(this.getClass().getResourceAsStream(debugCoordDataFile.get())
-                    .readAllBytes());
-
-            this.DEBUG_PLAYER_COORDS.mark();
-        } else {
-            this.DEBUG_PLAYER_COORDS = null;
-        }
-
+    private DebugData(Optional<Long> messageInLatency,
+            boolean wrapOnOutOfBounds, boolean playbackFrames, boolean recordFrames) throws IOException {
         if (messageInLatency.isPresent()) {
             this.enabledFlags.add(DebugFlag.MessageInputLatency);
             this.DEBUG_MESSAGE_IN_LATENCY = messageInLatency.get();
@@ -54,6 +41,11 @@ public class DebugData {
         if (recordFrames) {
             this.enabledFlags.add(DebugFlag.RecordFrames);
         }
+
+        if (playbackFrames) {
+            this.enabledFlags.add(DebugFlag.PlaybackFrames);
+        }
+
     }
 
     public static void initFromEnv() {
@@ -61,12 +53,6 @@ public class DebugData {
         var debugEnabled = debug == null || !debug.equals("true");
         if (INSTANCE != null || debugEnabled) {
             return;
-        }
-
-        Optional<String> debugCoordsFile = Optional.empty();
-        var path = System.getenv("SNAKE_DEBUG_COORDS_FILE");
-        if (path != null) {
-            debugCoordsFile = Optional.of("/debug/" + path);
         }
 
         Optional<Long> messageInLatency = Optional.empty();
@@ -85,8 +71,12 @@ public class DebugData {
         var recordEnv = System.getenv("SNAKE_DEBUG_RECORD_FRAMES");
         var recordFrames = recordEnv != null && recordEnv.equals("true");
 
+        var playbacbEnv = System.getenv("SNAKE_DEBUG_PLAYBACK_FRAMES");
+        var playbackFrames = playbacbEnv != null && playbacbEnv.equals("true");
+
         try {
-            INSTANCE = new DebugData(debugCoordsFile, messageInLatency, wrapOnOutOfBounds, recordFrames);
+            INSTANCE = new DebugData(messageInLatency, wrapOnOutOfBounds, playbackFrames,
+                    recordFrames);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,6 +94,16 @@ public class DebugData {
         return INSTANCE.enabledFlags.contains(flag);
     }
 
+    public static void recordGameOverIfEnabled(int sessionKey) {
+        if (INSTANCE == null || !INSTANCE.enabledFlags.contains(DebugFlag.RecordFrames)) {
+            return;
+        }
+
+        var recorder = INSTANCE.frameRecorders.get(sessionKey);
+        DevUtils.assertion(recorder != null, "record should be called before recodGameOver");
+        recorder.recordGameOver();
+    }
+
     public static void recordIfEnabled(int sessionKey, Player player, PlayerGameFrame frame) {
         if (INSTANCE == null || !INSTANCE.enabledFlags.contains(DebugFlag.RecordFrames)) {
             return;
@@ -118,41 +118,17 @@ public class DebugData {
         recorder.record(player, frame);
     }
 
-    public Long messageInLatency() {
-        return this.DEBUG_MESSAGE_IN_LATENCY;
+    public PlayerGameFrame playback(int sessionKey, Player player) {
+        var playback = INSTANCE.framePlayers.get(sessionKey);
+        if (playback == null) {
+            playback = new DebugFramePlayer(sessionKey);
+            INSTANCE.framePlayers.put(sessionKey, playback);
+        }
+
+        return playback.playback(player);
     }
 
-    public Optional<Coordinate[]> nextDebugCoords() {
-        if (this.DEBUG_PLAYER_COORDS == null) {
-            return Optional.empty();
-        }
-
-        var terminator = new byte[] { (byte) 255, (byte) 255 };
-        var coords = new ArrayList<Coordinate>();
-
-        while (this.DEBUG_PLAYER_COORDS.remaining() > 0) {
-            var xBytes = new byte[2];
-            this.DEBUG_PLAYER_COORDS.get(xBytes);
-            if (Arrays.equals(xBytes, terminator)) {
-                break;
-            }
-
-            var yBytes = new byte[2];
-            this.DEBUG_PLAYER_COORDS.get(yBytes);
-            if (Arrays.equals(yBytes, terminator)) {
-                break;
-            }
-
-            var x = BinaryUtils.bytesToInt16(xBytes);
-            var y = BinaryUtils.bytesToInt16(yBytes);
-            coords.add(new Coordinate(x, y));
-        }
-
-        if (this.DEBUG_PLAYER_COORDS.remaining() == 0) {
-            this.DEBUG_PLAYER_COORDS.reset();
-        }
-
-        Coordinate[] arr = new Coordinate[coords.size()];
-        return Optional.of(coords.toArray(arr));
+    public Long messageInLatency() {
+        return this.DEBUG_MESSAGE_IN_LATENCY;
     }
 }

@@ -40,7 +40,8 @@ public class GameSession {
 
     public GameSession() {
         // TODO: validate that the key is unique
-        this.sessionKey = ThreadLocalRandom.current().nextInt(0, 100_000);
+        this.sessionKey = GameUtils.randomInt(0, 100_000);
+        System.out.println("key " + this.sessionKey);
         System.out.println("Created new session");
     }
 

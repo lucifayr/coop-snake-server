@@ -1,9 +1,11 @@
 package com.coopsnakeserver.app.debug;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Random;
 
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
@@ -16,22 +18,30 @@ import com.coopsnakeserver.app.pojo.Player;
  *
  * @author June L. Gschwantner
  */
-public class DebugData {
+public class DebugMode {
     private final Long DEBUG_MESSAGE_IN_LATENCY;
 
     private final HashMap<Integer, DebugFramePlayer> framePlayers = new HashMap<>();
     private final HashMap<Integer, DebugFrameRecorder> frameRecorders = new HashMap<>();
     private final HashSet<DebugFlag> enabledFlags = new HashSet<>();
+    private final Random random;
 
-    private static DebugData INSTANCE;
+    private static DebugMode INSTANCE;
 
-    private DebugData(Optional<Long> messageInLatency,
+    private DebugMode(Optional<Long> messageInLatency, Optional<Long> seed,
             boolean wrapOnOutOfBounds, boolean playbackFrames, boolean recordFrames) throws IOException {
         if (messageInLatency.isPresent()) {
             this.enabledFlags.add(DebugFlag.MessageInputLatency);
             this.DEBUG_MESSAGE_IN_LATENCY = messageInLatency.get();
         } else {
             this.DEBUG_MESSAGE_IN_LATENCY = null;
+        }
+
+        if (seed.isPresent()) {
+            this.enabledFlags.add(DebugFlag.SeedRandom);
+            this.random = new Random(seed.get());
+        } else {
+            this.random = null;
         }
 
         if (wrapOnOutOfBounds) {
@@ -49,14 +59,24 @@ public class DebugData {
     }
 
     public static void initFromEnv() {
-        var debug = System.getenv("SNAKE_DEBUG");
+        var debug = System.getenv(DebugFlag.Namespace.KEY);
         var debugEnabled = debug == null || !debug.equals("true");
         if (INSTANCE != null || debugEnabled) {
             return;
         }
 
+        Optional<Long> randomSeed = Optional.empty();
+        var seedEnv = System.getenv(DebugFlag.SeedRandom.getEnvKey());
+        if (seedEnv != null) {
+            try {
+                randomSeed = Optional.of(Long.parseUnsignedLong(seedEnv));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         Optional<Long> messageInLatency = Optional.empty();
-        var latency = System.getenv("SNAKE_DEBUG_MSG_IN_LATENCY");
+        var latency = System.getenv(DebugFlag.MessageInputLatency.getEnvKey());
         if (latency != null) {
             try {
                 messageInLatency = Optional.of(Long.parseUnsignedLong(latency));
@@ -65,24 +85,29 @@ public class DebugData {
             }
         }
 
-        var wrapEnv = System.getenv("SNAKE_DEBUG_WRAP_ON_OUT_OF_BOUNDS");
+        var wrapEnv = System.getenv(DebugFlag.WrapAroundOnOutOfBounds.getEnvKey());
         var wrapOnOutOfBounds = wrapEnv != null && wrapEnv.equals("true");
 
-        var recordEnv = System.getenv("SNAKE_DEBUG_RECORD_FRAMES");
+        var recordEnv = System.getenv(DebugFlag.RecordFrames.getEnvKey());
         var recordFrames = recordEnv != null && recordEnv.equals("true");
 
-        var playbacbEnv = System.getenv("SNAKE_DEBUG_PLAYBACK_FRAMES");
+        var playbacbEnv = System.getenv(DebugFlag.PlaybackFrames.getEnvKey());
         var playbackFrames = playbacbEnv != null && playbacbEnv.equals("true");
 
         try {
-            INSTANCE = new DebugData(messageInLatency, wrapOnOutOfBounds, playbackFrames,
+            INSTANCE = new DebugMode(messageInLatency, randomSeed, wrapOnOutOfBounds, playbackFrames,
                     recordFrames);
+
+            System.out
+                    .println("Initialized debug mode from env.\nEnabled flags: "
+                            + Arrays.toString(INSTANCE.enabledFlags.toArray()));
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
-    public static DebugData instance() {
+    public static DebugMode instance() {
         return INSTANCE;
     }
 
@@ -92,6 +117,38 @@ public class DebugData {
         }
 
         return INSTANCE.enabledFlags.contains(flag);
+    }
+
+    public float randomFloat(float origin, float bound) {
+        if (INSTANCE == null || !INSTANCE.enabledFlags.contains(DebugFlag.SeedRandom)) {
+            return -1;
+        }
+
+        return INSTANCE.random.nextFloat(origin, bound);
+    }
+
+    public int randomInt(int origin, int bound) {
+        if (INSTANCE == null || !INSTANCE.enabledFlags.contains(DebugFlag.SeedRandom)) {
+            return -1;
+        }
+
+        return INSTANCE.random.nextInt(origin, bound);
+    }
+
+    public int randomInt(int bound) {
+        return randomInt(Integer.MIN_VALUE, bound);
+    }
+
+    public int randomInt() {
+        return randomInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    public float randomFloat(float bound) {
+        return randomFloat(Float.MIN_VALUE, bound);
+    }
+
+    public float randomFloat() {
+        return randomFloat(Float.MIN_VALUE, Float.MAX_VALUE);
     }
 
     public static void recordGameOverIfEnabled(int sessionKey) {

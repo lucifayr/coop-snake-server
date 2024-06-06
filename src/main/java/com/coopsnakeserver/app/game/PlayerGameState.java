@@ -6,7 +6,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.PlayerToken;
-import com.coopsnakeserver.app.debug.DebugData;
+import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.Player;
@@ -55,7 +55,7 @@ public class PlayerGameState {
             this.canonicalFrame = frame;
         }
 
-        DebugData.recordIfEnabled(this.session.getKey(), this.player, this.canonicalFrame);
+        DebugMode.recordIfEnabled(this.session.getKey(), this.player, this.canonicalFrame);
     }
 
     public PlayerGameFrame canonicalFrame() {

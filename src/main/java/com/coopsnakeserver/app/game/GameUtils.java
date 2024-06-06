@@ -1,9 +1,12 @@
 package com.coopsnakeserver.app.game;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayDeque;
 import java.util.List;
 
 import com.coopsnakeserver.app.DevUtils;
+import com.coopsnakeserver.app.debug.DebugMode;
+import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.pojo.Coordinate;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
 
@@ -15,6 +18,38 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class GameUtils {
+    public static float randomFloat() {
+        return GameUtils.randomFloat(Float.MIN_VALUE, Float.MAX_VALUE);
+    }
+
+    public static float randomFloat(float bound) {
+        return GameUtils.randomFloat(Float.MIN_VALUE, Float.MAX_VALUE);
+    }
+
+    public static float randomFloat(float origin, float bound) {
+        if (DebugMode.instanceHasFlag(DebugFlag.SeedRandom)) {
+            return DebugMode.instance().randomFloat(origin, bound);
+        }
+
+        return ThreadLocalRandom.current().nextFloat(origin, bound);
+    }
+
+    public static int randomInt() {
+        return GameUtils.randomInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    public static int randomInt(int bound) {
+        return GameUtils.randomInt(Integer.MIN_VALUE, bound);
+    }
+
+    public static int randomInt(int origin, int bound) {
+        if (DebugMode.instanceHasFlag(DebugFlag.SeedRandom)) {
+            return DebugMode.instance().randomInt(origin, bound);
+        }
+
+        return ThreadLocalRandom.current().nextInt(origin, bound);
+    }
+
     public static boolean headOutOfBounds(Coordinate head, short boardSize) {
         var outUp = head.y() < 0;
         var outRight = head.x() >= boardSize;

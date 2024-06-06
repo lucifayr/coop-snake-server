@@ -1,11 +1,11 @@
 package com.coopsnakeserver.app.pojo;
 
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.IntoBytes;
+import com.coopsnakeserver.app.game.GameUtils;
 
 /**
  * Coordiantes
@@ -35,15 +35,15 @@ public class Coordinate implements IntoBytes {
                         "Cluster should not be outside the board area. board size = %02d, cluster size = %02d, cluster y = %02d",
                         boardSize, clusterSize, clusterY));
 
-        var w = ThreadLocalRandom.current().nextFloat();
+        var w = GameUtils.randomFloat();
         var inCluster = w < weight;
         if (inCluster) {
-            var x = (short) ThreadLocalRandom.current().nextInt(clusterX, clusterX + clusterSize);
-            var y = (short) ThreadLocalRandom.current().nextInt(clusterY, clusterY + clusterSize);
+            var x = (short) GameUtils.randomInt(clusterX, clusterX + clusterSize);
+            var y = (short) GameUtils.randomInt(clusterY, clusterY + clusterSize);
             return new Coordinate(x, y);
         } else {
-            var x = (short) ThreadLocalRandom.current().nextInt(0, boardSize);
-            var y = (short) ThreadLocalRandom.current().nextInt(0, boardSize);
+            var x = (short) GameUtils.randomInt(0, boardSize);
+            var y = (short) GameUtils.randomInt(0, boardSize);
             return new Coordinate(x, y);
         }
     }

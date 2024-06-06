@@ -9,7 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
-import com.coopsnakeserver.app.debug.DebugData;
+import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Coordinate;
@@ -45,8 +45,8 @@ public class PlayerGameLoop {
     public Optional<GameOverCause> tick() {
         this.tickN += 1;
 
-        if (DebugData.instanceHasFlag(DebugFlag.PlaybackFrames)) {
-            var frame = DebugData.instance().playback(state.getSessionKey(), state.getPlayer());
+        if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
+            var frame = DebugMode.instance().playback(state.getSessionKey(), state.getPlayer());
             this.state.newCanonicalFrame(frame);
             return Optional.empty();
         }
@@ -55,12 +55,12 @@ public class PlayerGameLoop {
         var snakeInfo = nextSnakeInfo(newSnakeDirection);
 
         if (GameUtils.headOutOfBounds(snakeInfo.coords().getFirst(), this.state.getBoardSize())) {
-            DebugData.recordGameOverIfEnabled(this.state.getSessionKey());
+            DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionBounds);
         }
 
         if (GameUtils.headSelfCollision(snakeInfo.coords().getFirst(), snakeInfo.coords().stream().toList())) {
-            DebugData.recordGameOverIfEnabled(this.state.getSessionKey());
+            DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionSelf);
         }
 
@@ -132,7 +132,7 @@ public class PlayerGameLoop {
 
         var snakeHead = coords.peekFirst();
         var snakeHeadNext = GameUtils.nextHead(snakeHead, direction);
-        if (DebugData.instanceHasFlag(DebugFlag.WrapAroundOnOutOfBounds)) {
+        if (DebugMode.instanceHasFlag(DebugFlag.WrapAroundOnOutOfBounds)) {
             snakeHeadNext = GameUtils.wrappedHead(snakeHeadNext, state.getBoardSize());
         }
 

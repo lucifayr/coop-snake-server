@@ -3,7 +3,7 @@ package com.coopsnakeserver.app;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.coopsnakeserver.app.debug.DebugData;
+import com.coopsnakeserver.app.debug.DebugMode;
 
 /**
  *
@@ -13,9 +13,8 @@ import com.coopsnakeserver.app.debug.DebugData;
  */
 @SpringBootApplication
 public class App {
-
     public static void main(String[] args) {
-        DebugData.initFromEnv();
+        DebugMode.initFromEnv();
 
         SpringApplication.run(App.class, args);
     }

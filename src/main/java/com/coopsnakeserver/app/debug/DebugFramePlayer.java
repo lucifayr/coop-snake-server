@@ -18,7 +18,6 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class DebugFramePlayer {
-
     private final int sessionKey;
     private final HashMap<Byte, FileInputStream> playbackStreams = new HashMap<>();
 
@@ -38,30 +37,33 @@ public class DebugFramePlayer {
     private PlayerGameFrame playbackActual(Player player) throws IOException {
         var stream = playbackStreams.get(player.getValue());
         if (stream == null) {
-
-            var filePath = String.format("src/main/resources/debug/recordings/%06d/player_%02d", this.sessionKey,
-                    player.getValue());
-            var file = new File(filePath);
-            stream = new FileInputStream(file);
+            stream = openStream(player);
             playbackStreams.put(player.getValue(), stream);
-
-            stream.mark(Integer.MAX_VALUE);
         }
 
-        return readNextFrame(stream);
+        return readNextFrame(stream, player);
     }
 
-    private PlayerGameFrame readNextFrame(FileInputStream stream) throws IOException {
+    private FileInputStream openStream(Player player) throws IOException {
+        var filePath = String.format("src/main/resources/debug/recordings/%06d/player_%02d", this.sessionKey,
+                player.getValue());
+        var file = new File(filePath);
+        return new FileInputStream(file);
+    }
+
+    private PlayerGameFrame readNextFrame(FileInputStream stream, Player player) throws IOException {
         if (stream.available() == 0) {
-            stream.reset();
+            stream = openStream(player);
+            playbackStreams.put(player.getValue(), stream);
         }
 
         var dataLenBytes = stream.readNBytes(4);
         var dataLen = BinaryUtils.bytesToInt32(dataLenBytes);
 
         if (dataLen == 0) {
-            stream.reset();
-            return readNextFrame(stream);
+            stream = openStream(player);
+            playbackStreams.put(player.getValue(), stream);
+            return readNextFrame(stream, player);
         }
 
         var foodCoord = Coordinate.fromBytes(stream.readNBytes(4));

@@ -8,8 +8,28 @@ package com.coopsnakeserver.app.debug;
  * @author June L. Gschwantner
  */
 public enum DebugFlag {
-    PlaybackFrames,
-    RecordFrames,
-    MessageInputLatency,
-    WrapAroundOnOutOfBounds;
+    PlaybackFrames(Namespace.KEY + "_PLAYBACK_FRAMES"),
+    RecordFrames(Namespace.KEY + "_RECORD_FRAMES"),
+    MessageInputLatency(Namespace.KEY + "_MESSAGE_INPUT_LATENCY"),
+    WrapAroundOnOutOfBounds(Namespace.KEY + "_WRAP_ON_OUT_OF_BOUNDS"),
+    SeedRandom(Namespace.KEY + "_SEED_RANDOM");
+
+    private final String envKey;
+
+    private DebugFlag(String envKey) {
+        this.envKey = envKey;
+    }
+
+    public String getEnvKey() {
+        return this.envKey;
+    }
+
+    public class Namespace {
+        public static String KEY = "SNAKE_DEBUG";
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s(%s)", this.name(), this.envKey);
+    }
 }

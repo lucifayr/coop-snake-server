@@ -74,6 +74,13 @@ public class GameSession {
         System.out.println(String.format("Created session %06d", this.sessionKey));
     }
 
+    public void disconnectPlayer(byte playerNumber) {
+        DevUtils.assertion(this.gameState == GameSessionState.WaitingForPlayers,
+                "Disconnecting players without sessions teardown is only allowed before the game has started.");
+
+        this.loops.remove(new Player(playerNumber));
+    }
+
     public void connectPlayer(byte playerNumber, WebSocketSession ws)
             throws IOException {
         DevUtils.assertion(playerNumber <= this.config.getPlayerCount(),
@@ -145,6 +152,10 @@ public class GameSession {
         var loop = this.loops.get(tokenOwner);
         DevUtils.assertion(loop != null, "Player that owns a token should always have a game loop.");
         loop.registerSwipeInput(input);
+    }
+
+    public GameSessionState getState() {
+        return this.gameState;
     }
 
     public int getKey() {

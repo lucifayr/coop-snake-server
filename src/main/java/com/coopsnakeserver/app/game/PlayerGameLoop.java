@@ -44,12 +44,9 @@ public class PlayerGameLoop {
         this.tickN += 1;
 
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
-            System.out.println("dbg key    " + this.debugSessionKey);
-            System.out.println("dbg player " + this.debugPlayer);
             var sessionKey = this.debugSessionKey.orElseGet(() -> this.state.getSessionKey());
             var player = this.debugPlayer.orElseGet(() -> this.state.getPlayer());
             var frame = DebugMode.instance().playback(sessionKey, player);
-            System.out.println(frame);
 
             if (frame.isPresent()) {
                 this.state.newCanonicalFrame(frame.get());

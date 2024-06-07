@@ -1,7 +1,6 @@
 package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.springframework.web.socket.BinaryMessage;
@@ -29,10 +28,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
     private byte nextPlayer = 1;
 
-    public GameSessionSocket(int sessionKey) {
-        // TODO: allow user defined config
-        var config = new GameSessionConfig(Optional.empty(), Optional.empty(), Optional.empty());
-
+    public GameSessionSocket(int sessionKey, GameSessionConfig config) {
         this.sessionKey = sessionKey;
         this.gameSession = new GameSession(this.sessionKey, config, executor);
     }
@@ -51,7 +47,12 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     // TODO: handle disconnects properly
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        this.gameSession.teardown();
+        if (this.gameSession.getState() == GameSessionState.WaitingForPlayers) {
+            this.gameSession.disconnectPlayer((byte) (this.nextPlayer - 1));
+            nextPlayer -= 1;
+        } else {
+            this.gameSession.teardown();
+        }
     }
 
     @Override

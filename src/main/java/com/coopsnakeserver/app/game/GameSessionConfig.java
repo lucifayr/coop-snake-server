@@ -14,25 +14,25 @@ public class GameSessionConfig {
     private static short DEFAULT_BOARD_SIZE = 32;
     private static short DEFAULT_INITIAL_SNAKE_SIZE = 3;
 
-    private byte playerCount;
-    private short boardSize;
-    private short initialSnakeSize;
+    private Optional<Byte> playerCount;
+    private Optional<Short> boardSize;
+    private Optional<Short> initialSnakeSize;
 
     public GameSessionConfig(Optional<Byte> playerCount, Optional<Short> boardSize, Optional<Short> initialSnakeSize) {
-        this.playerCount = playerCount.orElse(DEFAULT_PLAYER_COUNT);
-        this.boardSize = boardSize.orElse(DEFAULT_BOARD_SIZE);
-        this.initialSnakeSize = initialSnakeSize.orElse(DEFAULT_INITIAL_SNAKE_SIZE);
+        this.playerCount = playerCount;
+        this.boardSize = boardSize;
+        this.initialSnakeSize = initialSnakeSize;
     }
 
     public short getBoardSize() {
-        return boardSize;
+        return this.boardSize.orElse(DEFAULT_BOARD_SIZE);
     }
 
     public short getInitialSnakeSize() {
-        return initialSnakeSize;
+        return this.initialSnakeSize.orElse(DEFAULT_INITIAL_SNAKE_SIZE);
     }
 
     public byte getPlayerCount() {
-        return playerCount;
+        return this.playerCount.orElse(DEFAULT_PLAYER_COUNT);
     }
 }

@@ -78,10 +78,7 @@ public class PlayerGameLoop {
     }
 
     public void updateWsClients() throws IOException {
-        var frame = this.state.canonicalFrame();
-
-        var foodCoord = new FoodCoordinate(this.state.getPlayer(), frame.getFoodCoord());
-        var foodMsg = new GameBinaryMessage(GameMessageType.FoodPosition, foodCoord.intoBytes());
+        var foodMsg = getFoodMsg();
         var foodMsgBin = new BinaryMessage(foodMsg.intoBytes());
 
         var playerMsg = getPlayerMsg();
@@ -94,9 +91,14 @@ public class PlayerGameLoop {
         // TODO: also send food info
 
         for (var loop : this.parentSession.getOtherLoops(this.state.getPlayer())) {
+            var otherFoodMsg = loop.getFoodMsg();
+            var otherFoodMsgBin = new BinaryMessage(otherFoodMsg.intoBytes());
+
             var otherPlayerMsg = loop.getPlayerMsg();
             var otherPlayerMsgBin = new BinaryMessage(otherPlayerMsg.intoBytes());
+
             ws.sendMessage(otherPlayerMsgBin);
+            ws.sendMessage(otherFoodMsgBin);
         }
     }
 
@@ -107,6 +109,12 @@ public class PlayerGameLoop {
 
         var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), this.tickN, coords);
         return new GameBinaryMessage(GameMessageType.PlayerPosition, playerCoords.intoBytes());
+    }
+
+    public GameBinaryMessage getFoodMsg() {
+        var frame = this.state.canonicalFrame();
+        var foodCoord = new FoodCoordinate(this.state.getPlayer(), frame.getFoodCoord());
+        return new GameBinaryMessage(GameMessageType.FoodPosition, foodCoord.intoBytes());
     }
 
     public void registerSwipeInput(PlayerSwipeInput input) {

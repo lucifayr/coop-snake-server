@@ -22,9 +22,11 @@ public class GameSessionController {
     private final HashMap<Integer, GameSessionSocket> sessions = new HashMap<>();
 
     @PostMapping("/game/session/new")
-    private void newEmployee(@RequestBody GameSessionConfig config) {
+    private String newEmployee(@RequestBody GameSessionConfig config) {
         var key = uniqueSessionKey();
         sessions.put(key, new GameSessionSocket(key, config));
+
+        return String.format("%06d", key);
     }
 
     public HashMap<Integer, GameSessionSocket> getSessions() {

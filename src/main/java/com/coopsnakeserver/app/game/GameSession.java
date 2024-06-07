@@ -101,7 +101,7 @@ public class GameSession {
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
 
         var state = new PlayerGameState(this, ws, player, token, this.config.getInitialSnakeSize());
-        var loop = new PlayerGameLoop(state);
+        var loop = new PlayerGameLoop(this, state);
 
         this.loops.put(player, loop);
         this.tokenOwners.put(token, player);
@@ -131,6 +131,14 @@ public class GameSession {
         this.tickFunc.cancel(true);
 
         System.out.println(String.format("Closed session %06d", this.sessionKey));
+    }
+
+    public java.util.List<PlayerGameLoop> getOtherLoops(Player me) {
+        return this.loops.entrySet().stream().filter(e -> {
+            return e.getKey() != me;
+        }).map(e -> {
+            return e.getValue();
+        }).toList();
     }
 
     public void handleBinWsMsg(BinaryMessage message) {

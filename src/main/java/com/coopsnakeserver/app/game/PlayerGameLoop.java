@@ -28,6 +28,7 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
  * @author June L. Gschwantner
  */
 public class PlayerGameLoop {
+    private GameSession parentSession;
     private PlayerGameState state;
     private ArrayDeque<PlayerSwipeInput> swipeInputQueue = new ArrayDeque<>();
 
@@ -36,7 +37,8 @@ public class PlayerGameLoop {
     private Optional<Integer> debugSessionKey = Optional.empty();
     private Optional<Player> debugPlayer = Optional.empty();
 
-    public PlayerGameLoop(PlayerGameState state) {
+    public PlayerGameLoop(GameSession parentSession, PlayerGameState state) {
+        this.parentSession = parentSession;
         this.state = state;
     }
 
@@ -82,16 +84,29 @@ public class PlayerGameLoop {
         var foodMsg = new GameBinaryMessage(GameMessageType.FoodPosition, foodCoord.intoBytes());
         var foodMsgBin = new BinaryMessage(foodMsg.intoBytes());
 
-        var coords = new Coordinate[frame.getSnakeCoords().size()];
-        frame.getSnakeCoords().toArray(coords);
-
-        var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), this.tickN, coords);
-        var playerMsg = new GameBinaryMessage(GameMessageType.PlayerPosition, playerCoords.intoBytes());
+        var playerMsg = getPlayerMsg();
         var playerMsgBin = new BinaryMessage(playerMsg.intoBytes());
 
         var ws = this.state.getConnection();
         ws.sendMessage(playerMsgBin);
         ws.sendMessage(foodMsgBin);
+
+        // TODO: also send food info
+
+        for (var loop : this.parentSession.getOtherLoops(this.state.getPlayer())) {
+            var otherPlayerMsg = loop.getPlayerMsg();
+            var otherPlayerMsgBin = new BinaryMessage(otherPlayerMsg.intoBytes());
+            ws.sendMessage(otherPlayerMsgBin);
+        }
+    }
+
+    public GameBinaryMessage getPlayerMsg() {
+        var frame = this.state.canonicalFrame();
+        var coords = new Coordinate[frame.getSnakeCoords().size()];
+        frame.getSnakeCoords().toArray(coords);
+
+        var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), this.tickN, coords);
+        return new GameBinaryMessage(GameMessageType.PlayerPosition, playerCoords.intoBytes());
     }
 
     public void registerSwipeInput(PlayerSwipeInput input) {

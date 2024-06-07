@@ -13,6 +13,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new GameSessionSocket(), "/game/tmp");
+        registry.addHandler(new GameSessionSocket(123456), "/game/session/123456");
     }
 }

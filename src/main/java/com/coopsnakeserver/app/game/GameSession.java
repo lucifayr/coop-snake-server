@@ -1,15 +1,17 @@
 package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -28,47 +30,37 @@ public class GameSession {
     public static int TICKS_PER_SECOND = 8;
     private static long TICK_RATE_MILLIS = 1_000 / TICKS_PER_SECOND;
 
-    private static short GAME_BOARD_SIZE = 32;
-    private static short INITIAL_SNAKE_SIZE = 3;
-
     private int sessionKey;
-    private boolean gameRunning = true;
+    private GameSessionState gameState = GameSessionState.WaitingForPlayers;
 
-    private PlayerGameLoop pLoop;
+    private GameSessionConfig config;
+
+    private HashMap<Player, PlayerGameLoop> loops = new HashMap<>();
+    private HashMap<PlayerToken, Player> tokenOwners = new HashMap<>();
     private ScheduledFuture<?> tickFunc;
 
-    public GameSession() {
-        // TODO: validate that the key is unique
-        this.sessionKey = GameUtils.randomInt(0, 100_000);
-        System.out.println("key " + this.sessionKey);
-        System.out.println("Created new session");
-    }
-
-    public void connectFirst(ScheduledExecutorService executor, WebSocketSession session) throws IOException {
-        var token = PlayerToken.genRandom(Optional.empty());
-        var tokenMsg = new BinaryMessage(token.intoMsg().intoBytes());
-        session.sendMessage(tokenMsg);
-
-        var boardInfo = new SessionInfo(SessionInfoType.BoardSize, BinaryUtils.int32ToBytes((int) GAME_BOARD_SIZE));
-        var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
-        var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
-        session.sendMessage(boardInfoMsgBin);
-
-        var state = new PlayerGameState(this, session, new Player((byte) 1), token, INITIAL_SNAKE_SIZE);
-        this.pLoop = new PlayerGameLoop(state);
+    public GameSession(int sessionKey, GameSessionConfig config, ScheduledExecutorService executor) {
+        this.sessionKey = sessionKey;
+        this.config = config;
 
         var future = executor.scheduleWithFixedDelay(() -> {
+            if (this.gameState != GameSessionState.Running) {
+                return;
+            }
+
             try {
-                var gameOver = pLoop.tick();
-                if (gameOver.isPresent()) {
-                    this.gameRunning = false;
-                    notifyGameOver(gameOver.get());
-                    teardown();
+                for (var l : this.loops.values()) {
+                    var gameOver = l.tick();
+                    if (gameOver.isPresent()) {
+                        this.gameState = GameSessionState.GameOver;
+                        notifyGameOver(gameOver.get());
+                        teardown();
 
-                    return;
+                        return;
+                    }
+
+                    l.updateWsClients();
                 }
-
-                pLoop.updateWsClients();
             } catch (Exception e) {
                 var t = Thread.currentThread();
                 t.getUncaughtExceptionHandler().uncaughtException(t, e);
@@ -78,20 +70,60 @@ public class GameSession {
         }, 0, TICK_RATE_MILLIS, TimeUnit.MILLISECONDS);
 
         this.tickFunc = future;
-        System.out.println("Connection opened: " + session.getId());
+
+        System.out.println(String.format("Created session %06d", this.sessionKey));
+    }
+
+    public void connectPlayer(byte playerNumber, WebSocketSession ws)
+            throws IOException {
+        DevUtils.assertion(playerNumber <= this.config.getPlayerCount(),
+                String.format("Too many players tried to connect. Expected max = %d. Received player number %d",
+                        this.config.getPlayerCount(), playerNumber));
+
+        var player = new Player(playerNumber);
+        DevUtils.assertion(!this.loops.containsKey(player),
+                "Each player should only connect once. Received duplicate player " + player);
+
+        var otherTokens = this.loops.values().stream().map(l -> l.getToken()).collect(Collectors.toList());
+        var token = PlayerToken.genRandom(otherTokens);
+        var tokenMsg = new BinaryMessage(token.intoMsg().intoBytes());
+
+        var boardInfo = new SessionInfo(SessionInfoType.BoardSize,
+                BinaryUtils.int32ToBytes((int) this.config.getBoardSize()));
+        var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
+        var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
+
+        var state = new PlayerGameState(this, ws, player, token, this.config.getInitialSnakeSize());
+        var loop = new PlayerGameLoop(state);
+
+        this.loops.put(player, loop);
+        this.tokenOwners.put(token, player);
+
+        ws.sendMessage(tokenMsg);
+        ws.sendMessage(boardInfoMsgBin);
+
+        System.out.println("Player connected : " + player);
+
+        if (playerNumber == this.config.getPlayerCount()) {
+            this.gameState = GameSessionState.Running;
+
+            System.out.println(String.format("Starting game for session %06d", this.sessionKey));
+        }
     }
 
     public void notifyGameOver(GameOverCause cause) throws IOException {
         var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, cause.intoBytes());
         var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo, gameOverMsg.intoBytes());
 
-        this.pLoop.getConnection().sendMessage(new BinaryMessage(gameOverMsgBin.intoBytes()));
+        for (var l : this.loops.values()) {
+            l.getConnection().sendMessage(new BinaryMessage(gameOverMsgBin.intoBytes()));
+        }
     }
 
     public void teardown() {
         this.tickFunc.cancel(true);
 
-        System.out.println("Closed session");
+        System.out.println(String.format("Closed session %06d", this.sessionKey));
     }
 
     public void handleBinWsMsg(BinaryMessage message) {
@@ -103,10 +135,16 @@ public class GameSession {
         }
     }
 
-    // TODO: validate tokens
     private void handleInput(GameBinaryMessage msg) {
         var input = PlayerSwipeInput.fromBytes(msg.getData());
-        pLoop.registerSwipeInput(input);
+        var tokenOwner = tokenOwners.get(input.getPlayerToken());
+        if (tokenOwner == null) {
+            return;
+        }
+
+        var loop = this.loops.get(tokenOwner);
+        DevUtils.assertion(loop != null, "Player that owns a token should always have a game loop.");
+        loop.registerSwipeInput(input);
     }
 
     public int getKey() {
@@ -114,10 +152,15 @@ public class GameSession {
     }
 
     public short getBoardSize() {
-        return GAME_BOARD_SIZE;
+        return this.config.getBoardSize();
     }
 
-    public void enableDebugFrameReplay(int sessionKey, Player player) {
-        this.pLoop.enableDebugFrameReplay(sessionKey, player);
+    public void enableDebugFrameReplay(int sessionKey, Player player, Player lastConnectedPlayer) {
+        var loop = this.loops.get(lastConnectedPlayer);
+        if (loop == null) {
+            return;
+        }
+
+        loop.enableDebugFrameReplay(sessionKey, player);
     }
 }

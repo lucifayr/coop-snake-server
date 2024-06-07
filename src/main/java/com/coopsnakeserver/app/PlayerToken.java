@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,28 +31,19 @@ public class PlayerToken implements IntoBytes {
         return new PlayerToken(token);
     }
 
-    public static PlayerToken genRandom(Optional<PlayerToken> other) {
-        var token = new SecureRandom().nextInt(0, Integer.MAX_VALUE);
-        while (other.isPresent() && other.get().token == token) {
-            token = new SecureRandom().nextInt(0, Integer.MAX_VALUE);
-        }
+    public static PlayerToken genRandom(List<PlayerToken> others) {
+        PlayerToken token;
+        do {
+            token = new PlayerToken(new SecureRandom().nextInt(0, Integer.MAX_VALUE));
+        } while (others.contains(token));
 
-        return new PlayerToken(token);
+        return token;
     }
 
     public GameBinaryMessage intoMsg() {
         var type = SessionInfoType.PlayerToken;
         var info = new SessionInfo(type, BinaryUtils.int32ToBytes(this.token));
         return new GameBinaryMessage(GameMessageType.SessionInfo, info.intoBytes());
-    }
-
-    public Optional<Player> tokenOwner(Map<PlayerToken, Player> tokens) {
-        var player = tokens.get(this);
-        if (player == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(player);
     }
 
     @Override
@@ -70,5 +62,10 @@ public class PlayerToken implements IntoBytes {
         }
 
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.token;
     }
 }

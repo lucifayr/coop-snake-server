@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
+import com.coopsnakeserver.app.PlayerToken;
 import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.debug.DebugFlag;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
@@ -43,9 +44,12 @@ public class PlayerGameLoop {
         this.tickN += 1;
 
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
+            System.out.println("dbg key    " + this.debugSessionKey);
+            System.out.println("dbg player " + this.debugPlayer);
             var sessionKey = this.debugSessionKey.orElseGet(() -> this.state.getSessionKey());
             var player = this.debugPlayer.orElseGet(() -> this.state.getPlayer());
             var frame = DebugMode.instance().playback(sessionKey, player);
+            System.out.println(frame);
 
             if (frame.isPresent()) {
                 this.state.newCanonicalFrame(frame.get());
@@ -95,6 +99,10 @@ public class PlayerGameLoop {
 
     public void registerSwipeInput(PlayerSwipeInput input) {
         swipeInputQueue.addLast(input);
+    }
+
+    public PlayerToken getToken() {
+        return this.state.getToken();
     }
 
     public WebSocketSession getConnection() {

@@ -1,5 +1,6 @@
 package com.coopsnakeserver.app.pojo;
 
+import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.IntoBytes;
 
 /**
@@ -12,6 +13,8 @@ public class Player implements IntoBytes {
     private final byte value;
 
     public Player(byte id) {
+        DevUtils.assertion(id != 0, "Player id should never be the byte 0.");
+
         this.value = id;
     }
 
@@ -40,5 +43,10 @@ public class Player implements IntoBytes {
         }
 
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) this.value;
     }
 }

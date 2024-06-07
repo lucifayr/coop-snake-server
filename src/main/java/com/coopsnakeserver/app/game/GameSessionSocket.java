@@ -1,8 +1,7 @@
 package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.springframework.web.socket.BinaryMessage;
@@ -23,44 +22,40 @@ import com.coopsnakeserver.app.debug.DebugFlag;
  * @author June L. Gschwantner
  */
 public class GameSessionSocket extends BinaryWebSocketHandler {
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
-    // TODO: figure out how to handle sharing sessions
-    HashMap<String, GameSession> gameSessions = new HashMap<>();
+    private int sessionKey;
+    private GameSession gameSession;
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        var id = session.getId();
-        try {
+    private byte nextPlayer = 1;
 
-            var gameSession = new GameSession();
-            gameSession.connectFirst(executor, session);
+    public GameSessionSocket(int sessionKey) {
+        // TODO: allow user defined config
+        var config = new GameSessionConfig(Optional.empty(), Optional.empty(), Optional.empty());
 
-            gameSessions.put(id, gameSession);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.sessionKey = sessionKey;
+        this.gameSession = new GameSession(this.sessionKey, config, executor);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        var id = session.getId();
-        var gameSession = gameSessions.remove(id);
-
-        if (gameSession == null) {
-            return;
+    public void afterConnectionEstablished(WebSocketSession ws) {
+        try {
+            gameSession.connectPlayer(this.nextPlayer, ws);
+            this.nextPlayer += 1;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        gameSession.teardown();
+    }
+
+    // TODO: handle disconnects properly
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        this.gameSession.teardown();
     }
 
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
-        var gameSession = gameSessions.get(session.getId());
-        if (gameSession == null) {
-            return;
-        }
-
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
             var bytes = message.getPayload();
             var isDebugFrameReplayEnableMsg = bytes.get(0) == GameBinaryMessage.DEBUG_MESSAGE_IDENTIFIER;
@@ -68,8 +63,11 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
             if (isDebugFrameReplayEnableMsg) {
                 var sessionKey = bytes.getInt(1);
                 var player = new Player(bytes.get(5));
-                gameSession.enableDebugFrameReplay(sessionKey, player);
 
+                // massive hack :)
+                var lastConnectedPlayer = new Player((byte) (this.nextPlayer - 1));
+
+                gameSession.enableDebugFrameReplay(sessionKey, player, lastConnectedPlayer);
                 return;
             }
         }

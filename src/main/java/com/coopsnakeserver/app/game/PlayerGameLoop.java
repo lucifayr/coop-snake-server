@@ -2,6 +2,7 @@ package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.springframework.web.socket.BinaryMessage;
@@ -69,6 +70,17 @@ public class PlayerGameLoop {
             return Optional.of(GameOverCause.CollisionSelf);
         }
 
+        var otherSnakeCoords = this.parentSession.getOtherLoops(this.state.getPlayer()).stream()
+                .flatMap(l -> {
+                    var coords = l.getCanonicalFrame().getSnakeCoords();
+                    return coords.stream();
+                }).toList();
+
+        if (GameUtils.headOtherCollision(snakeInfo.coords().getFirst(), otherSnakeCoords)) {
+            DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
+            return Optional.of(GameOverCause.CollisionOther);
+        }
+
         var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
         var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
         this.state.newCanonicalFrame(frame);
@@ -87,8 +99,6 @@ public class PlayerGameLoop {
         var ws = this.state.getConnection();
         ws.sendMessage(playerMsgBin);
         ws.sendMessage(foodMsgBin);
-
-        // TODO: also send food info
 
         for (var loop : this.parentSession.getOtherLoops(this.state.getPlayer())) {
             var otherFoodMsg = loop.getFoodMsg();
@@ -109,6 +119,10 @@ public class PlayerGameLoop {
 
         var playerCoords = new PlayerCoordiantes(this.state.getPlayer(), this.tickN, coords);
         return new GameBinaryMessage(GameMessageType.PlayerPosition, playerCoords.intoBytes());
+    }
+
+    public PlayerGameFrame getCanonicalFrame() {
+        return this.state.canonicalFrame();
     }
 
     public GameBinaryMessage getFoodMsg() {

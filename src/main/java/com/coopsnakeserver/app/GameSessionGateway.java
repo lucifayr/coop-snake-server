@@ -8,6 +8,8 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
+import com.coopsnakeserver.app.game.GameSessionSocket;
+
 // TODO/WARNING: this is a massive hack. Why. Because I don't have time to
 // change the architecture of GameSessionSocket. So this is now the glue that
 // allows multiple sessions to connect with a key. Not great.
@@ -78,7 +80,7 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
             var keyString = uri.substring(uri.lastIndexOf('/') + 1);
             var key = Integer.parseInt(keyString);
 
-            if (key < 0 || key >= 100_000) {
+            if (key < 0 || key >= GameSessionSocket.MAX_SESSIONS) {
                 return Optional.empty();
             }
 

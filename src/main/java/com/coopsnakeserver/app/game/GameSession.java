@@ -2,6 +2,7 @@ package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +134,7 @@ public class GameSession {
         System.out.println(String.format("Closed session %06d", this.sessionKey));
     }
 
-    public java.util.List<PlayerGameLoop> getOtherLoops(Player me) {
+    public List<PlayerGameLoop> getOtherLoops(Player me) {
         return this.loops.entrySet().stream().filter(e -> {
             return e.getKey() != me;
         }).map(e -> {

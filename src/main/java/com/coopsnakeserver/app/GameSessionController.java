@@ -34,12 +34,12 @@ public class GameSessionController {
     }
 
     private int uniqueSessionKey() {
-        DevUtils.assertion(sessions.keySet().size() < 100_000,
+        DevUtils.assertion(sessions.keySet().size() < GameSessionSocket.MAX_SESSIONS,
                 "Maximum number of sessions exeeded. Cannot created a new unique key.");
 
         int key;
         do {
-            key = GameUtils.randomInt(0, 100_000);
+            key = GameUtils.randomInt(0, GameSessionSocket.MAX_SESSIONS);
         } while (sessions.containsKey(key));
 
         return key;

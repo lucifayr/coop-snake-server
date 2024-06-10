@@ -21,6 +21,7 @@ import com.coopsnakeserver.app.debug.DebugFlag;
  * @author June L. Gschwantner
  */
 public class GameSessionSocket extends BinaryWebSocketHandler {
+    public static final int MAX_SESSIONS = 1_000_000;
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
     private int sessionKey;

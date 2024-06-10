@@ -70,6 +70,17 @@ public class GameUtils {
         return false;
     }
 
+    public static boolean headOtherCollision(Coordinate head, List<Coordinate> otherBodies) {
+        for (var i = 0; i < otherBodies.size(); i++) {
+            var segment = otherBodies.get(i);
+            if (head.equals(segment)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Find a non-occupied coordinate to place new food on. Prefers placing food
      * far away from the player/snake head.

@@ -37,25 +37,39 @@ public class GameSessionController {
     }
 
     private static Optional<ResponseEntity<String>> checkConfig(GameSessionConfig config) {
-        if (config.getBoardSize() < GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
+        var bSize = config.getBoardSize();
+        var sSize = config.getInitialSnakeSize();
+        var pCount = config.getPlayerCount();
+
+        if (bSize < GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
             return Optional.of(
-                    ResponseEntity.badRequest().body(String.format("Board size too small: %d", config.getBoardSize())));
+                    ResponseEntity.badRequest().body(String.format("Board size too small: %d", bSize)));
         }
-        if (config.getBoardSize() > GameSessionSocket.MAX_BOARD_SIZE) {
+        if (bSize > GameSessionSocket.MAX_BOARD_SIZE) {
             return Optional.of(
-                    ResponseEntity.badRequest().body(String.format("Board size too large: %d", config.getBoardSize())));
+                    ResponseEntity.badRequest().body(String.format("Board size too large: %d", bSize)));
         }
-        if (config.getInitialSnakeSize() > GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
+        if (sSize > GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
             return Optional.of(ResponseEntity.badRequest()
-                    .body(String.format("Initial snake size too small: %d", config.getInitialSnakeSize())));
+                    .body(String.format("Initial snake size too small: %d", sSize)));
         }
-        if (config.getPlayerCount() < GameSessionSocket.MIN_PLAYER_COUNT) {
+        if (sSize > bSize) {
             return Optional.of(ResponseEntity.badRequest()
-                    .body(String.format("Player count too small: %d", config.getPlayerCount())));
+                    .body(String.format("Initial snake size too large for board: board %d, snake %d",
+                            bSize, sSize)));
         }
-        if (config.getPlayerCount() > GameSessionSocket.MAX_PLAYER_COUNT) {
+        if (pCount < GameSessionSocket.MIN_PLAYER_COUNT) {
             return Optional.of(ResponseEntity.badRequest()
-                    .body(String.format("Player count too large: %d", config.getPlayerCount())));
+                    .body(String.format("Player count too small: %d", pCount)));
+        }
+        if (pCount > GameSessionSocket.MAX_PLAYER_COUNT) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .body(String.format("Player count too large: %d", pCount)));
+        }
+        if (pCount > bSize - 1) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .body(String.format("Player count too large for board: board %d, players %d", bSize,
+                            pCount)));
         }
 
         return Optional.empty();

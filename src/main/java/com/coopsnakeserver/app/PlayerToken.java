@@ -2,12 +2,9 @@ package com.coopsnakeserver.app;
 
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import com.coopsnakeserver.app.pojo.SessionInfoType;
 import com.coopsnakeserver.app.pojo.GameMessageType;
-import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SessionInfo;
 
 /**
@@ -44,6 +41,11 @@ public class PlayerToken implements IntoBytes {
         var type = SessionInfoType.PlayerToken;
         var info = new SessionInfo(type, BinaryUtils.int32ToBytes(this.token));
         return new GameBinaryMessage(GameMessageType.SessionInfo, info.intoBytes());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%010d", this.token);
     }
 
     @Override

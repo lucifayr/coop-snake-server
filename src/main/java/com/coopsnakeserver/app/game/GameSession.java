@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
@@ -76,8 +77,11 @@ public class GameSession {
     }
 
     public void disconnectPlayer(byte playerNumber) {
-        DevUtils.assertion(this.gameState == GameSessionState.WaitingForPlayers,
-                "Disconnecting players without sessions teardown is only allowed before the game has started.");
+        if (this.gameState != GameSessionState.WaitingForPlayers) {
+            App.logger().warn(
+                    "Trying to close sessino for player that is not waiting for the game to start Disconnect will be ignored.",
+                    this.gameState);
+        }
 
         this.loops.remove(new Player(playerNumber));
     }
@@ -152,14 +156,23 @@ public class GameSession {
     }
 
     private void handleInput(GameBinaryMessage msg) {
-        var input = PlayerSwipeInput.fromBytes(msg.getData());
+        var inputOpt = PlayerSwipeInput.fromBytes(msg.getData());
+        if (inputOpt.isEmpty()) {
+            return;
+        }
+
+        var input = inputOpt.get();
         var tokenOwner = tokenOwners.get(input.getPlayerToken());
         if (tokenOwner == null) {
             return;
         }
 
         var loop = this.loops.get(tokenOwner);
-        DevUtils.assertion(loop != null, "Player that owns a token should always have a game loop.");
+        if (loop == null) {
+            App.logger().warn(
+                    String.format("Received input for player that doesn't have a running loop. Input = %s", input));
+            return;
+        }
         loop.registerSwipeInput(input);
     }
 

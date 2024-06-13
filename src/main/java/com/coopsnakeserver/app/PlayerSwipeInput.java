@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import com.coopsnakeserver.app.pojo.SwipeInputKind;
 
@@ -22,25 +23,41 @@ public class PlayerSwipeInput {
         this.tickN = tickN;
     }
 
-    public static PlayerSwipeInput fromBytes(byte[] bytes) {
+    /**
+     * Parse a byte array into a player swipe input. Bytes but the formatted
+     * correctly.
+     *
+     * @param bytes The bytes to parse into an input.
+     * @return {@code}Empty{@code} if the bytes are malformed otherwise parsed
+     *         input.
+     */
+    public static Optional<PlayerSwipeInput> fromBytes(byte[] bytes) {
         var len = 5 + PlayerToken.PLAYER_TOKEN_BYTE_WIDTH;
-        DevUtils.assertion(bytes.length == len,
-                String.format("Expected %d bytes of data for player swipe input. Received bytes %s: %s", len,
-                        bytes.length, Arrays.toString(bytes)));
+        if (bytes.length != len) {
+            App.logger().warn(
+                    String.format("Expected %d bytes of data for player swipe input. Received bytes %s: %s", len,
+                            bytes.length, Arrays.toString(bytes)));
+
+            return Optional.empty();
+        }
 
         var tokenBytes = Arrays.copyOfRange(bytes, 0, PlayerToken.PLAYER_TOKEN_BYTE_WIDTH);
         var token = PlayerToken.fromBytes(tokenBytes);
 
         var kindByte = bytes[PlayerToken.PLAYER_TOKEN_BYTE_WIDTH];
         var kind = SwipeInputKind.fromByte(kindByte);
-        DevUtils.assertion(kind.isPresent(), String.format("Received invalid byte %d for swipe input kind.", kindByte));
+        if (kind.isEmpty()) {
+            App.logger().warn(String.format("Received invalid byte %d for swipe input kind.", kindByte));
+            return Optional.empty();
+        }
 
         var tickNBytesStartIdx = PlayerToken.PLAYER_TOKEN_BYTE_WIDTH + 1;
         var tickNBytesEndIdx = tickNBytesStartIdx + 4;
         var tickNBytes = Arrays.copyOfRange(bytes, tickNBytesStartIdx, tickNBytesEndIdx);
         var tickN = BinaryUtils.bytesToInt32(tickNBytes);
 
-        return new PlayerSwipeInput(token, kind.get(), tickN);
+        var input = new PlayerSwipeInput(token, kind.get(), tickN);
+        return Optional.of(input);
     }
 
     public PlayerToken getPlayerToken() {
@@ -57,6 +74,7 @@ public class PlayerSwipeInput {
 
     @Override
     public String toString() {
-        return String.format("PlayerSwipeInput (kind = %5s, frame = %010d)", this.kind, this.tickN);
+        return String.format("PlayerSwipeInput (kind = %5s, frame = %010d, token = %s)", this.kind, this.tickN,
+                this.token);
     }
 }

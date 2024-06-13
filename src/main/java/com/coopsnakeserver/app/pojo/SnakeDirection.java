@@ -23,6 +23,7 @@ public enum SnakeDirection implements IntoBytes {
     }
 
     public static SnakeDirection fromBytes(byte[] bytes) {
+        // TODO: assert
         DevUtils.assertion(bytes.length == 1,
                 "Expected 1 byte long array for snake direction. Received bytes " + Arrays.toString(bytes));
         var b = bytes[0];

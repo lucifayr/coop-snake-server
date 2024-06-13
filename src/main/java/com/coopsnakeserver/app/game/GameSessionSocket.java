@@ -22,6 +22,12 @@ import com.coopsnakeserver.app.debug.DebugFlag;
  */
 public class GameSessionSocket extends BinaryWebSocketHandler {
     public static final int MAX_SESSIONS = 1_000_000;
+    public static final short MAX_BOARD_SIZE = 255;
+    public static final short MIN_BOARD_SIZE = 16;
+    public static final byte MAX_PLAYER_COUNT = 127;
+    public static final byte MIN_PLAYER_COUNT = 2;
+    public static final short MIN_INTIIAL_SNAKE_SIZE = 2;
+
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
     private int sessionKey;

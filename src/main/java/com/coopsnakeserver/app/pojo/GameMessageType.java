@@ -1,10 +1,8 @@
 package com.coopsnakeserver.app.pojo;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import com.coopsnakeserver.app.BinaryUtils;
-import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.IntoBytes;
 
 /**

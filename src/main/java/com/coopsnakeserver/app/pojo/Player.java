@@ -13,6 +13,7 @@ public class Player implements IntoBytes {
     private final byte value;
 
     public Player(byte id) {
+        // TODO: assert
         DevUtils.assertion(id != 0, "Player id should never be the byte 0.");
 
         this.value = id;

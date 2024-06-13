@@ -83,8 +83,8 @@ public class PlayerGameState {
     }
 
     private void createInitialFrame() {
-        DevUtils.assertion(this.initialSnakeSize > 0,
-                "Snake has to have more than 0 segemnts at the start of the game. Received " + this.initialSnakeSize);
+        DevUtils.assertion(this.initialSnakeSize >= 2,
+                "Snake has to have more than 1 segemnt at the start of the game. Received " + this.initialSnakeSize);
 
         short yOffset = player.getValue();
         var goLeft = yOffset % 2 == 0;

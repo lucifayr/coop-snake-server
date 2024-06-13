@@ -146,6 +146,7 @@ public class GameUtils {
 
     public static ArrayDeque<Coordinate> initialCoords(short snakeSize, short boardSize, short yOffset,
             boolean goLeft) {
+        // TODO: assert
         DevUtils.assertion(boardSize / 2 > snakeSize, "Board is too small to initialize a snake.");
         var coords = new ArrayDeque<Coordinate>(snakeSize);
 

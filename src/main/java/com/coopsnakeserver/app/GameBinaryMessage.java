@@ -74,17 +74,25 @@ public class GameBinaryMessage implements IntoBytes {
      */
     public static GameBinaryMessage fromBytes(byte[] msg) {
         var version = msg[0];
-        DevUtils.assertion(version == MESSAGE_VERSION,
-                String.format("Version mismatch. Expected %d. Received %d.", MESSAGE_VERSION, version));
+        if (version != MESSAGE_VERSION) {
+            App.logger().warn(String.format("Version mismatch. Expected %d. Received %d.", MESSAGE_VERSION, version));
+
+            var data = new byte[] { version, MESSAGE_VERSION };
+            return new GameBinaryMessage(GameMessageType.ErrorInvalidVersion, data);
+        }
 
         var typeStartIdx = 1;
         var typeEndIdx = typeStartIdx + MESSAGE_HEADER_WIDTH_TYPE;
         var typeBytes = Arrays.copyOfRange(msg, typeStartIdx, typeEndIdx);
         var typeTag = BinaryUtils.bytesToInt32(typeBytes);
         var type = GameMessageType.fromTag(typeTag);
-        DevUtils.assertion(type.isPresent(),
-                String.format("Invalid message type received. Received %d. Valid types are %s", typeTag,
-                        Arrays.toString(GameMessageType.values())));
+        if (type.isEmpty()) {
+            App.logger().warn(String.format("Invalid message type received. Received %d. Valid types are %s", typeTag,
+                    Arrays.toString(GameMessageType.values())));
+
+            var data = BinaryUtils.concat(typeBytes, GameMessageType.validBytes());
+            return new GameBinaryMessage(GameMessageType.ErrorInvalidType, data);
+        }
 
         var lenStartIdx = typeEndIdx;
         var lenEndIdx = lenStartIdx + MESSAGE_HEADER_WIDTH_DATA_LENGTH;
@@ -93,11 +101,15 @@ public class GameBinaryMessage implements IntoBytes {
 
         var dataStartIdx = lenEndIdx;
         var dataEndIdx = dataStartIdx + dataLength;
-        DevUtils.assertion(msg.length >= dataEndIdx, String.format(
-                "Message is too short. Expected minium length %d but only got length %d", dataEndIdx, msg.length));
+        if (msg.length != dataEndIdx) {
+            App.logger().warn(String.format(
+                    "Message is too short. Expected minium length %d but only got length %d", dataEndIdx, msg.length));
+
+            var data = BinaryUtils.concat(BinaryUtils.int32ToBytes(msg.length), BinaryUtils.int32ToBytes(dataEndIdx));
+            return new GameBinaryMessage(GameMessageType.ErrorInvalidDataLength, data);
+        }
 
         var data = Arrays.copyOfRange(msg, dataStartIdx, dataEndIdx);
-
         return new GameBinaryMessage(type.get(), data);
     }
 

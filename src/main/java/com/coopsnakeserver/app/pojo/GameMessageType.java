@@ -1,8 +1,10 @@
 package com.coopsnakeserver.app.pojo;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.IntoBytes;
 
 /**
@@ -16,7 +18,10 @@ public enum GameMessageType implements IntoBytes {
     PlayerPosition(0),
     PlayerSwipeInput(1),
     SessionInfo(2),
-    FoodPosition(3);
+    FoodPosition(3),
+    ErrorInvalidVersion(20),
+    ErrorInvalidType(21),
+    ErrorInvalidDataLength(22);
 
     private final int tag;
 
@@ -32,11 +37,20 @@ public enum GameMessageType implements IntoBytes {
             case 1:
                 return Optional.of(GameMessageType.PlayerSwipeInput);
 
-            case 3:
+            case 2:
                 return Optional.of(GameMessageType.SessionInfo);
 
-            case 4:
+            case 3:
                 return Optional.of(GameMessageType.FoodPosition);
+
+            case 20:
+                return Optional.of(GameMessageType.ErrorInvalidVersion);
+
+            case 21:
+                return Optional.of(GameMessageType.ErrorInvalidType);
+
+            case 22:
+                return Optional.of(GameMessageType.ErrorInvalidDataLength);
 
             default:
                 return Optional.empty();
@@ -50,6 +64,11 @@ public enum GameMessageType implements IntoBytes {
 
     public int tag() {
         return this.tag;
+    }
+
+    public static byte[] validBytes() {
+        return BinaryUtils.iteratorToBytes(GameMessageType.values());
+
     }
 
     @Override

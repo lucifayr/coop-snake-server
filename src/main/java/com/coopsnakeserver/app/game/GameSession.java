@@ -116,12 +116,15 @@ public class GameSession {
 
         var otherTokens = this.loops.values().stream().map(l -> l.getToken()).collect(Collectors.toList());
         var token = PlayerToken.genRandom(otherTokens);
-        var tokenMsg = new BinaryMessage(token.intoMsg().intoBytes());
+        var tokenMsgBin = new BinaryMessage(token.intoMsg().intoBytes());
 
         var boardInfo = new SessionInfo(SessionInfoType.BoardSize,
                 BinaryUtils.int32ToBytes((int) this.config.getBoardSize()));
         var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
+
+        var playerIdMsg = new SessionInfo(SessionInfoType.PlayerId, new byte[] { player.getValue() });
+        var playerIdMsgBin = new BinaryMessage(playerIdMsg.intoBytes());
 
         var state = new PlayerGameState(this, ws, player, token, this.config.getInitialSnakeSize());
         var loop = new PlayerGameLoop(this, state);
@@ -129,7 +132,8 @@ public class GameSession {
         this.loops.put(player, loop);
         this.tokenOwners.put(token, player);
 
-        ws.sendMessage(tokenMsg);
+        ws.sendMessage(playerIdMsgBin);
+        ws.sendMessage(tokenMsgBin);
         ws.sendMessage(boardInfoMsgBin);
 
         System.out.println("Player connected : " + player);

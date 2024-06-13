@@ -86,15 +86,12 @@ public class PlayerGameState {
         DevUtils.assertion(this.initialSnakeSize >= 2,
                 "Snake has to have more than 1 segemnt at the start of the game. Received " + this.initialSnakeSize);
 
-        short yOffset = player.getValue();
-        var goLeft = yOffset % 2 == 0;
-
-        var snakeCoords = GameUtils.initialCoords(this.initialSnakeSize, session.getBoardSize(), yOffset, goLeft);
+        var snakeCoords = GameUtils.initialCoords(this.initialSnakeSize, session.getBoardSize(), player.getValue());
         var foodCoord = GameUtils.findFoodCoord(snakeCoords.getFirst(), snakeCoords.stream().toList(),
                 this.session.getBoardSize());
 
         var snakeDirection = SnakeDirection.Right;
-        if (goLeft) {
+        if (player.getValue() % 2 == 0) {
             snakeDirection = SnakeDirection.Left;
         }
 

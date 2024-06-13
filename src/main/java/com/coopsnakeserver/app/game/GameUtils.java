@@ -144,14 +144,27 @@ public class GameUtils {
         return new Coordinate(x, y);
     }
 
-    public static ArrayDeque<Coordinate> initialCoords(short snakeSize, short boardSize, short yOffset,
-            boolean goLeft) {
-        // TODO: assert
-        DevUtils.assertion(boardSize / 2 > snakeSize, "Board is too small to initialize a snake.");
+    public static ArrayDeque<Coordinate> initialCoords(short snakeSize, short boardSize, byte playerNumber) {
+        DevUtils.assertion(boardSize >= snakeSize, String.format(
+                "Board is too small to initialize a snake. Board size %d. Snake size %d", boardSize, snakeSize));
+        DevUtils.assertion(playerNumber < boardSize - 1, String.format(
+                "Board is too small to initialize a snake. Board size %d. Player number %d", boardSize, playerNumber));
+
         var coords = new ArrayDeque<Coordinate>(snakeSize);
 
-        var x0 = boardSize / 2;
-        var y0 = boardSize / 2 + yOffset;
+        var goLeft = playerNumber % 2 == 0;
+
+        var x0Offset = Math.max(snakeSize - boardSize / 2, 0);
+        var x0 = boardSize / 2 - x0Offset;
+        if (goLeft) {
+            x0 = boardSize / 2 + x0Offset;
+        }
+
+        var y0Offset = (playerNumber + 1) / 2;
+        if (goLeft) {
+            y0Offset *= -1;
+        }
+        var y0 = boardSize / 2 + y0Offset;
 
         var c0 = new Coordinate((short) x0, (short) y0);
         coords.addFirst(c0);

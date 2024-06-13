@@ -70,10 +70,10 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
             if (isDebugFrameReplayEnableMsg) {
                 var sessionKey = bytes.getInt(1);
-                var player = new Player(bytes.get(5));
+                var player = Player.fromByte(bytes.get(5)).get();
 
                 // massive hack :)
-                var lastConnectedPlayer = new Player((byte) (this.nextPlayer - 1));
+                var lastConnectedPlayer = Player.fromByte((byte) (this.nextPlayer - 1)).get();
 
                 gameSession.enableDebugFrameReplay(sessionKey, player, lastConnectedPlayer);
                 return;

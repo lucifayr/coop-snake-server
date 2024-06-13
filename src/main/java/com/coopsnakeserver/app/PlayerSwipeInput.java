@@ -42,7 +42,14 @@ public class PlayerSwipeInput {
         }
 
         var tokenBytes = Arrays.copyOfRange(bytes, 0, PlayerToken.PLAYER_TOKEN_BYTE_WIDTH);
-        var token = PlayerToken.fromBytes(tokenBytes);
+        var tokenOpt = PlayerToken.fromBytes(tokenBytes);
+        if (tokenOpt.isEmpty()) {
+            App.logger().warn(String.format("Received invalid bytes %s for player token. Expected 4 bytes",
+                    Arrays.toString(tokenBytes)));
+            return Optional.empty();
+        }
+
+        var token = tokenOpt.get();
 
         var kindByte = bytes[PlayerToken.PLAYER_TOKEN_BYTE_WIDTH];
         var kind = SwipeInputKind.fromByte(kindByte);

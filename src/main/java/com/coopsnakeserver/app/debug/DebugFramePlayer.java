@@ -66,13 +66,13 @@ public class DebugFramePlayer {
             return readNextFrame(stream, player);
         }
 
-        var foodCoord = Coordinate.fromBytes(stream.readNBytes(4));
-        var snakeDirection = SnakeDirection.fromBytes(stream.readNBytes(1));
+        var foodCoord = Coordinate.fromBytesInternal(stream.readNBytes(4));
+        var snakeDirection = SnakeDirection.fromBytesInternal(stream.readNBytes(1));
 
         var snakeCoordsByteLen = dataLen - 5;
         var snakeCoords = new ArrayDeque<Coordinate>(snakeCoordsByteLen / 4);
         for (var i = 0; i < snakeCoordsByteLen; i += 4) {
-            var coord = Coordinate.fromBytes(stream.readNBytes(4));
+            var coord = Coordinate.fromBytesInternal(stream.readNBytes(4));
             snakeCoords.addLast(coord);
         }
 

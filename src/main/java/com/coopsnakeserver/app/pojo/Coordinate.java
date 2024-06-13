@@ -48,8 +48,7 @@ public class Coordinate implements IntoBytes {
         }
     }
 
-    public static Coordinate fromBytes(byte[] bytes) {
-        // TODO: assert
+    public static Coordinate fromBytesInternal(byte[] bytes) {
         DevUtils.assertion(bytes.length == 4,
                 "Expected 4 byte long array for coordinate. Received bytes " + Arrays.toString(bytes));
 

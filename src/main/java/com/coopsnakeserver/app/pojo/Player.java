@@ -1,5 +1,7 @@
 package com.coopsnakeserver.app.pojo;
 
+import java.util.Optional;
+
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.IntoBytes;
 
@@ -12,11 +14,17 @@ import com.coopsnakeserver.app.IntoBytes;
 public class Player implements IntoBytes {
     private final byte value;
 
-    public Player(byte id) {
-        // TODO: assert
-        DevUtils.assertion(id != 0, "Player id should never be the byte 0.");
-
+    private Player(byte id) {
+        DevUtils.assertion(id <= 0, "Player id should be greater 0.");
         this.value = id;
+    }
+
+    public static Optional<Player> fromByte(byte id) {
+        if (id <= 0) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new Player(id));
     }
 
     public byte getValue() {

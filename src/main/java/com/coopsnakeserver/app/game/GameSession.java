@@ -13,7 +13,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.BinaryUtils;
-import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -79,22 +78,41 @@ public class GameSession {
     public void disconnectPlayer(byte playerNumber) {
         if (this.gameState != GameSessionState.WaitingForPlayers) {
             App.logger().warn(
-                    "Trying to close sessino for player that is not waiting for the game to start Disconnect will be ignored.",
+                    "Trying to disconnect from running session.Disconnect will be ignored.",
                     this.gameState);
         }
 
-        this.loops.remove(new Player(playerNumber));
+        var playerOpt = Player.fromByte(playerNumber);
+        if (playerOpt.isEmpty()) {
+            App.logger().warn(String.format("Received invalid player number %d", playerNumber));
+            return;
+        }
+
+        var player = playerOpt.get();
+        this.loops.remove(player);
     }
 
     public void connectPlayer(byte playerNumber, WebSocketSession ws)
             throws IOException {
-        DevUtils.assertion(playerNumber <= this.config.getPlayerCount(),
-                String.format("Too many players tried to connect. Expected max = %d. Received player number %d",
-                        this.config.getPlayerCount(), playerNumber));
+        if (playerNumber > this.config.getPlayerCount()) {
+            App.logger()
+                    .warn(String.format(
+                            "Extra player tried to connect. Expected max = %d. Received player number %d",
+                            this.config.getPlayerCount(), playerNumber));
+            return;
+        }
 
-        var player = new Player(playerNumber);
-        DevUtils.assertion(!this.loops.containsKey(player),
-                "Each player should only connect once. Received duplicate player " + player);
+        var playerOpt = Player.fromByte(playerNumber);
+        if (playerOpt.isEmpty()) {
+            App.logger().warn(String.format("Received invalid player number %d", playerNumber));
+            return;
+        }
+
+        var player = playerOpt.get();
+        if (this.loops.containsKey(player)) {
+            App.logger().warn(String.format("Player already connected. %s", player));
+            return;
+        }
 
         var otherTokens = this.loops.values().stream().map(l -> l.getToken()).collect(Collectors.toList());
         var token = PlayerToken.genRandom(otherTokens);

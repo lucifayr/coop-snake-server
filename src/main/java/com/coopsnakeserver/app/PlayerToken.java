@@ -2,6 +2,7 @@ package com.coopsnakeserver.app;
 
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Optional;
 
 import com.coopsnakeserver.app.pojo.SessionInfoType;
 import com.coopsnakeserver.app.pojo.GameMessageType;
@@ -23,9 +24,13 @@ public class PlayerToken implements IntoBytes {
         this.token = token;
     }
 
-    public static PlayerToken fromBytes(byte[] bytes) {
+    public static Optional<PlayerToken> fromBytes(byte[] bytes) {
+        if (bytes.length != 4) {
+            return Optional.empty();
+        }
+
         var token = BinaryUtils.bytesToInt32(bytes);
-        return new PlayerToken(token);
+        return Optional.of(new PlayerToken(token));
     }
 
     public static PlayerToken genRandom(List<PlayerToken> others) {

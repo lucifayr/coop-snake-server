@@ -41,7 +41,7 @@ public class GameSessionController {
         var sSize = config.getInitialSnakeSize();
         var pCount = config.getPlayerCount();
 
-        if (bSize < GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
+        if (bSize < GameSessionSocket.MIN_BOARD_SIZE) {
             return Optional.of(
                     ResponseEntity.badRequest().body(String.format("Board size too small: %d", bSize)));
         }
@@ -49,7 +49,7 @@ public class GameSessionController {
             return Optional.of(
                     ResponseEntity.badRequest().body(String.format("Board size too large: %d", bSize)));
         }
-        if (sSize > GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
+        if (sSize < GameSessionSocket.MIN_INTIIAL_SNAKE_SIZE) {
             return Optional.of(ResponseEntity.badRequest()
                     .body(String.format("Initial snake size too small: %d", sSize)));
         }

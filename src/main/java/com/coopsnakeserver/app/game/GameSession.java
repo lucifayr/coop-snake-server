@@ -127,8 +127,9 @@ public class GameSession {
         var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
 
-        var playerIdMsg = new SessionInfo(SessionInfoType.PlayerId, new byte[] { player.getValue() });
-        var playerIdMsgBin = new BinaryMessage(playerIdMsg.intoBytes());
+        var playerIdInfo = new SessionInfo(SessionInfoType.PlayerId, new byte[] { 0, 0, 0, player.getValue() });
+        var playerIdInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, playerIdInfo.intoBytes());
+        var playerIdInfoMsgBin = new BinaryMessage(playerIdInfoMsg.intoBytes());
 
         var state = new PlayerGameState(this, ws, player, token, this.config.getInitialSnakeSize());
         var loop = new PlayerGameLoop(this, state);
@@ -136,15 +137,21 @@ public class GameSession {
         this.loops.put(player, loop);
         this.tokenOwners.put(token, player);
 
-        ws.sendMessage(playerIdMsgBin);
+        ws.sendMessage(playerIdInfoMsgBin);
         ws.sendMessage(tokenMsgBin);
         ws.sendMessage(boardInfoMsgBin);
 
-        App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
+        var waitingFor = this.config.getPlayerCount() - playerNumber;
+        if (waitingFor > 0) {
+            var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
+            var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
+            var waitingForInfoMsgBin = new BinaryMessage(waitingForInfoMsg.intoBytes());
+            ws.sendMessage(waitingForInfoMsgBin);
+        }
 
+        App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
         if (playerNumber == this.config.getPlayerCount()) {
             this.gameState = GameSessionState.Running;
-
             App.logger().info(String.format("Starting game for session %06d", this.sessionKey));
         }
     }

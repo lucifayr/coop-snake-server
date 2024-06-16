@@ -14,14 +14,21 @@ public class GameSessionConfig {
     private static short DEFAULT_BOARD_SIZE = 32;
     private static short DEFAULT_INITIAL_SNAKE_SIZE = 3;
 
+    private String teamName;
     private Optional<Byte> playerCount;
     private Optional<Short> boardSize;
     private Optional<Short> initialSnakeSize;
 
-    public GameSessionConfig(Optional<Byte> playerCount, Optional<Short> boardSize, Optional<Short> initialSnakeSize) {
+    public GameSessionConfig(String teamName, Optional<Byte> playerCount, Optional<Short> boardSize,
+            Optional<Short> initialSnakeSize) {
+        this.teamName = teamName;
         this.playerCount = playerCount;
         this.boardSize = boardSize;
         this.initialSnakeSize = initialSnakeSize;
+    }
+
+    public String getTeamName() {
+        return this.teamName;
     }
 
     public short getBoardSize() {

@@ -40,6 +40,22 @@ public class GameSessionController {
         var bSize = config.getBoardSize();
         var sSize = config.getInitialSnakeSize();
         var pCount = config.getPlayerCount();
+        var tName = config.getTeamName();
+
+        if (tName == null) {
+            return Optional.of(
+                    ResponseEntity.badRequest().body("Missing team name"));
+        }
+
+        if (tName.length() <= 0) {
+            return Optional.of(
+                    ResponseEntity.badRequest().body(String.format("Team name too short: %s", tName)));
+        }
+
+        if (tName.length() > 255) {
+            return Optional.of(
+                    ResponseEntity.badRequest().body(String.format("Team name too long: %s", tName)));
+        }
 
         if (bSize < GameSessionSocket.MIN_BOARD_SIZE) {
             return Optional.of(

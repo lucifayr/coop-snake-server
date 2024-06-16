@@ -1,4 +1,5 @@
 target
 .classpath
 .factorypath
+score.db
 src/main/resources/debug/recordings

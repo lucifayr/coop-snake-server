@@ -14,6 +14,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.BinaryUtils;
+import com.coopsnakeserver.app.DBUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerRestartAction;
 import com.coopsnakeserver.app.PlayerSwipeInput;
@@ -63,9 +64,12 @@ public class GameSession {
                         var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo,
                                 gameOverMsg.intoBytes());
 
-                        var scoreMsg = new SessionInfo(SessionInfoType.Score, BinaryUtils.int32ToBytes(getScore()));
+                        var score = getScore();
+                        var scoreMsg = new SessionInfo(SessionInfoType.Score, BinaryUtils.int32ToBytes(score));
                         var scoreMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo,
                                 scoreMsg.intoBytes());
+
+                        DBUtils.saveScore(this.config.getTeamName(), score);
 
                         notifyConnections(scoreMsgBin);
                         notifyConnections(gameOverMsgBin);

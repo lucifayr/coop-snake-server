@@ -2,6 +2,7 @@ package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
 import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.BinaryUtils;
 import com.coopsnakeserver.app.GameBinaryMessage;
+import com.coopsnakeserver.app.PlayerRestartAction;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
 import com.coopsnakeserver.app.pojo.GameMessageType;
@@ -39,6 +41,7 @@ public class GameSession {
 
     private HashMap<Player, PlayerGameLoop> loops = new HashMap<>();
     private HashMap<PlayerToken, Player> tokenOwners = new HashMap<>();
+    private HashSet<PlayerToken> restartConfirmations = new HashSet<>();
     private ScheduledFuture<?> tickFunc;
 
     public GameSession(int sessionKey, GameSessionConfig config, ScheduledExecutorService executor) {
@@ -55,7 +58,11 @@ public class GameSession {
                     var gameOver = l.tick();
                     if (gameOver.isPresent()) {
                         this.gameState = GameSessionState.GameOver;
-                        notifyGameOver(gameOver.get());
+
+                        var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, gameOver.get().intoBytes());
+                        var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo,
+                                gameOverMsg.intoBytes());
+                        notifyConnections(gameOverMsgBin);
 
                         return;
                     }
@@ -158,30 +165,24 @@ public class GameSession {
         notifyWaitingFor(playerNumber);
     }
 
-    public void notifyWaitingFor(byte playerNumber) {
-        var waitingFor = this.config.getPlayerCount() - playerNumber;
-        var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
-        var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
-        var waitingForInfoMsgBin = new BinaryMessage(waitingForInfoMsg.intoBytes());
-
+    private void notifyConnections(GameBinaryMessage msg) {
         for (var l : this.loops.values()) {
             try {
-                l.getConnection().sendMessage(waitingForInfoMsgBin);
+                l.getConnection().sendMessage(new BinaryMessage(msg.intoBytes()));
             } catch (Exception e) {
                 e.printStackTrace();
-                App.logger().warn(String.format("Failed to notify connection %s of updated wait list",
-                        l.getConnection().getId()));
+                App.logger().warn(String.format("Failed to notify connection %s. Message = %s",
+                        l.getConnection().getId(), msg));
             }
         }
     }
 
-    public void notifyGameOver(GameOverCause cause) throws IOException {
-        var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, cause.intoBytes());
-        var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo, gameOverMsg.intoBytes());
+    private void notifyWaitingFor(byte playerNumber) {
+        var waitingFor = this.config.getPlayerCount() - playerNumber;
+        var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
+        var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
 
-        for (var l : this.loops.values()) {
-            l.getConnection().sendMessage(new BinaryMessage(gameOverMsgBin.intoBytes()));
-        }
+        notifyConnections(waitingForInfoMsg);
     }
 
     public void teardown() {
@@ -219,6 +220,20 @@ public class GameSession {
         if (msg.getType() == GameMessageType.PlayerSwipeInput) {
             handleInput(msg);
         }
+
+        if (msg.getType() == GameMessageType.PlayerRestartConfirm) {
+            var restartAction = PlayerRestartAction.fromBytes(msg.getData());
+            if (restartAction.isPresent()) {
+                handleRestartConfirmation(restartAction.get());
+            }
+        }
+
+        if (msg.getType() == GameMessageType.PlayerRestartDeny) {
+            var restartAction = PlayerRestartAction.fromBytes(msg.getData());
+            if (restartAction.isPresent()) {
+                handleRestartDenial(restartAction.get());
+            }
+        }
     }
 
     private void handleInput(GameBinaryMessage msg) {
@@ -240,6 +255,52 @@ public class GameSession {
             return;
         }
         loop.registerSwipeInput(input);
+    }
+
+    private void restartGame() {
+        for (var loop : this.loops.values()) {
+            loop.reset();
+        }
+
+        this.gameState = GameSessionState.Running;
+    }
+
+    private void handleRestartConfirmation(PlayerRestartAction action) {
+        if (this.gameState != GameSessionState.GameOver) {
+            return;
+        }
+
+        if (tokenOwners.containsKey(action.getPlayerToken())) {
+            restartConfirmations.add(action.getPlayerToken());
+        }
+
+        var waitingFor = tokenOwners.size() - restartConfirmations.size();
+        if (waitingFor <= 0) {
+            restartGame();
+            restartConfirmations.clear();
+            var restartInfo = new SessionInfo(SessionInfoType.RestartConfirmed, new byte[0]);
+            var restartInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, restartInfo.intoBytes());
+            notifyConnections(restartInfoMsg);
+        } else {
+            var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
+            var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
+            notifyConnections(waitingForInfoMsg);
+        }
+    }
+
+    private void handleRestartDenial(PlayerRestartAction action) {
+        if (this.gameState != GameSessionState.GameOver) {
+            return;
+        }
+
+        if (!restartConfirmations.contains(action.getPlayerToken())
+                && tokenOwners.containsKey(action.getPlayerToken())) {
+            var restartInfo = new SessionInfo(SessionInfoType.RestartDenied, new byte[0]);
+            var restartInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, restartInfo.intoBytes());
+            notifyConnections(restartInfoMsg);
+
+            teardown();
+        }
     }
 
     public GameSessionState getState() {

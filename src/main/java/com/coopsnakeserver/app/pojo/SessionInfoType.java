@@ -15,7 +15,9 @@ public enum SessionInfoType implements IntoBytes {
     GameOver((byte) 3),
     PlayerId((byte) 4),
     WaitingFor((byte) 5),
-    PlayerCount((byte) 6);
+    PlayerCount((byte) 6),
+    RestartConfirmed((byte) 7),
+    RestartDenied((byte) 8);
 
     private final byte value;
 

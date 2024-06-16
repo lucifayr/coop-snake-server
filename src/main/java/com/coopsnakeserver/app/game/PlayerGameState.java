@@ -58,6 +58,10 @@ public class PlayerGameState {
         DebugMode.recordIfEnabled(this.session.getKey(), this.player, this.canonicalFrame);
     }
 
+    public void reset() {
+        createInitialFrame();
+    }
+
     public PlayerGameFrame canonicalFrame() {
         return this.canonicalFrame;
     }

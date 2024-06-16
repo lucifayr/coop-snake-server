@@ -17,6 +17,8 @@ public enum GameMessageType implements IntoBytes {
     PlayerSwipeInput(1),
     SessionInfo(2),
     FoodPosition(3),
+    PlayerRestartConfirm(4),
+    PlayerRestartDeny(5),
     ErrorInvalidVersion(20),
     ErrorInvalidType(21),
     ErrorInvalidDataLength(22);
@@ -40,6 +42,12 @@ public enum GameMessageType implements IntoBytes {
 
             case 3:
                 return Optional.of(GameMessageType.FoodPosition);
+
+            case 4:
+                return Optional.of(GameMessageType.PlayerRestartConfirm);
+
+            case 5:
+                return Optional.of(GameMessageType.PlayerRestartDeny);
 
             case 20:
                 return Optional.of(GameMessageType.ErrorInvalidVersion);

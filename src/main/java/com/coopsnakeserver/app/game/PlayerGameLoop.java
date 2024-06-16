@@ -81,7 +81,12 @@ public class PlayerGameLoop {
         this.state.newCanonicalFrame(frame);
 
         return Optional.empty();
+    }
 
+    public void reset() {
+        this.swipeInputQueue.clear();
+        this.tickN = 0;
+        this.state.reset();
     }
 
     public void updateWsClients() throws IOException {

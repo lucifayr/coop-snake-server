@@ -35,7 +35,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     private int sessionKey;
     private GameSession gameSession;
 
-    private byte nextPlayer = 1;
+    private byte nextPlayer = 0;
 
     public GameSessionSocket(int sessionKey, GameSessionConfig config, GameSessionController controler) {
         this.controler = controler;
@@ -46,8 +46,8 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession ws) {
         try {
-            gameSession.connectPlayer(this.nextPlayer, ws);
             this.nextPlayer += 1;
+            gameSession.connectPlayer(this.nextPlayer, ws);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -46,7 +46,7 @@ public class GameSession {
         this.config = config;
 
         var future = executor.scheduleWithFixedDelay(() -> {
-            if (this.gameState != GameSessionState.Running) {
+            if (this.gameState != GameSessionState.Running || this.closed) {
                 return;
             }
 
@@ -90,6 +90,8 @@ public class GameSession {
 
         var player = playerOpt.get();
         this.loops.remove(player);
+
+        notifyWaitingFor(playerNumber);
     }
 
     public void connectPlayer(byte playerNumber, WebSocketSession ws)
@@ -141,18 +143,29 @@ public class GameSession {
         ws.sendMessage(tokenMsgBin);
         ws.sendMessage(boardInfoMsgBin);
 
-        var waitingFor = this.config.getPlayerCount() - playerNumber;
-        if (waitingFor > 0) {
-            var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
-            var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
-            var waitingForInfoMsgBin = new BinaryMessage(waitingForInfoMsg.intoBytes());
-            ws.sendMessage(waitingForInfoMsgBin);
-        }
-
         App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
         if (playerNumber == this.config.getPlayerCount()) {
             this.gameState = GameSessionState.Running;
             App.logger().info(String.format("Starting game for session %06d", this.sessionKey));
+        }
+
+        notifyWaitingFor(playerNumber);
+    }
+
+    public void notifyWaitingFor(byte playerNumber) {
+        var waitingFor = this.config.getPlayerCount() - playerNumber;
+        var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
+        var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
+        var waitingForInfoMsgBin = new BinaryMessage(waitingForInfoMsg.intoBytes());
+
+        for (var l : this.loops.values()) {
+            try {
+                l.getConnection().sendMessage(waitingForInfoMsgBin);
+            } catch (Exception e) {
+                e.printStackTrace();
+                App.logger().warn(String.format("Failed to notify connection %s of updated wait list",
+                        l.getConnection().getId()));
+            }
         }
     }
 

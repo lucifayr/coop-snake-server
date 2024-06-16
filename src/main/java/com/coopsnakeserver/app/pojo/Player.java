@@ -15,7 +15,7 @@ public class Player implements IntoBytes {
     private final byte value;
 
     private Player(byte id) {
-        DevUtils.assertion(id <= 0, "Player id should be greater 0.");
+        DevUtils.assertion(id > 0, "Player id should be greater 0. Received " + id);
         this.value = id;
     }
 
@@ -24,7 +24,8 @@ public class Player implements IntoBytes {
             return Optional.empty();
         }
 
-        return Optional.of(new Player(id));
+        var player = new Player(id);
+        return Optional.of(player);
     }
 
     public byte getValue() {

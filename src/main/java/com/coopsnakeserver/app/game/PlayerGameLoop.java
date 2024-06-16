@@ -34,6 +34,7 @@ public class PlayerGameLoop {
     private ArrayDeque<PlayerSwipeInput> swipeInputQueue = new ArrayDeque<>();
 
     private int tickN = 0;
+    private int foodEaten = 0;
 
     private Optional<Integer> debugSessionKey = Optional.empty();
     private Optional<Player> debugPlayer = Optional.empty();
@@ -76,6 +77,10 @@ public class PlayerGameLoop {
             return Optional.of(GameOverCause.CollisionOther);
         }
 
+        if (snakeInfo.hasEatenFood) {
+            this.foodEaten += 1;
+        }
+
         var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
         var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
         this.state.newCanonicalFrame(frame);
@@ -86,6 +91,7 @@ public class PlayerGameLoop {
     public void reset() {
         this.swipeInputQueue.clear();
         this.tickN = 0;
+        this.foodEaten = 0;
         this.state.reset();
     }
 
@@ -110,6 +116,10 @@ public class PlayerGameLoop {
             ws.sendMessage(otherPlayerMsgBin);
             ws.sendMessage(otherFoodMsgBin);
         }
+    }
+
+    public int getFoodEaten() {
+        return this.foodEaten;
     }
 
     public GameBinaryMessage getPlayerMsg() {

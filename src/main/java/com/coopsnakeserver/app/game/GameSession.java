@@ -62,6 +62,12 @@ public class GameSession {
                         var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, gameOver.get().intoBytes());
                         var gameOverMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo,
                                 gameOverMsg.intoBytes());
+
+                        var scoreMsg = new SessionInfo(SessionInfoType.Score, BinaryUtils.int32ToBytes(getScore()));
+                        var scoreMsgBin = new GameBinaryMessage(GameMessageType.SessionInfo,
+                                scoreMsg.intoBytes());
+
+                        notifyConnections(scoreMsgBin);
                         notifyConnections(gameOverMsgBin);
 
                         return;
@@ -165,26 +171,6 @@ public class GameSession {
         notifyWaitingFor(playerNumber);
     }
 
-    private void notifyConnections(GameBinaryMessage msg) {
-        for (var l : this.loops.values()) {
-            try {
-                l.getConnection().sendMessage(new BinaryMessage(msg.intoBytes()));
-            } catch (Exception e) {
-                e.printStackTrace();
-                App.logger().warn(String.format("Failed to notify connection %s. Message = %s",
-                        l.getConnection().getId(), msg));
-            }
-        }
-    }
-
-    private void notifyWaitingFor(byte playerNumber) {
-        var waitingFor = this.config.getPlayerCount() - playerNumber;
-        var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
-        var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
-
-        notifyConnections(waitingForInfoMsg);
-    }
-
     public void teardown() {
         if (this.closed) {
             return;
@@ -234,6 +220,55 @@ public class GameSession {
                 handleRestartDenial(restartAction.get());
             }
         }
+    }
+
+    public GameSessionState getState() {
+        return this.gameState;
+    }
+
+    public int getKey() {
+        return this.sessionKey;
+    }
+
+    public short getBoardSize() {
+        return this.config.getBoardSize();
+    }
+
+    public void enableDebugFrameReplay(int sessionKey, Player player, Player lastConnectedPlayer) {
+        var loop = this.loops.get(lastConnectedPlayer);
+        if (loop == null) {
+            return;
+        }
+
+        loop.enableDebugFrameReplay(sessionKey, player);
+    }
+
+    private int getScore() {
+        var score = this.loops.values().stream().mapToInt(loop -> {
+            return loop.getFoodEaten();
+        }).sum();
+
+        return score;
+    }
+
+    private void notifyConnections(GameBinaryMessage msg) {
+        for (var l : this.loops.values()) {
+            try {
+                l.getConnection().sendMessage(new BinaryMessage(msg.intoBytes()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                App.logger().warn(String.format("Failed to notify connection %s. Message = %s",
+                        l.getConnection().getId(), msg));
+            }
+        }
+    }
+
+    private void notifyWaitingFor(byte playerNumber) {
+        var waitingFor = this.config.getPlayerCount() - playerNumber;
+        var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
+        var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
+
+        notifyConnections(waitingForInfoMsg);
     }
 
     private void handleInput(GameBinaryMessage msg) {
@@ -301,26 +336,5 @@ public class GameSession {
 
             teardown();
         }
-    }
-
-    public GameSessionState getState() {
-        return this.gameState;
-    }
-
-    public int getKey() {
-        return this.sessionKey;
-    }
-
-    public short getBoardSize() {
-        return this.config.getBoardSize();
-    }
-
-    public void enableDebugFrameReplay(int sessionKey, Player player, Player lastConnectedPlayer) {
-        var loop = this.loops.get(lastConnectedPlayer);
-        if (loop == null) {
-            return;
-        }
-
-        loop.enableDebugFrameReplay(sessionKey, player);
     }
 }

@@ -63,8 +63,8 @@ public class GameSession {
                     l.updateWsClients();
                 }
             } catch (Exception e) {
-                var t = Thread.currentThread();
-                t.getUncaughtExceptionHandler().uncaughtException(t, e);
+                e.printStackTrace();
+                System.out.println(String.format("Uncaught exception session %06d", this.sessionKey));
 
                 teardown();
             }

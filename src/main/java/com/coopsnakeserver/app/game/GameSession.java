@@ -129,6 +129,11 @@ public class GameSession {
         var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
         var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
 
+        var playerCountInfo = new SessionInfo(SessionInfoType.PlayerCount,
+                BinaryUtils.int32ToBytes((int) this.config.getPlayerCount()));
+        var playerCountInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, playerCountInfo.intoBytes());
+        var playerCountInfoMsgBin = new BinaryMessage(playerCountInfoMsg.intoBytes());
+
         var playerIdInfo = new SessionInfo(SessionInfoType.PlayerId, new byte[] { 0, 0, 0, player.getValue() });
         var playerIdInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, playerIdInfo.intoBytes());
         var playerIdInfoMsgBin = new BinaryMessage(playerIdInfoMsg.intoBytes());
@@ -142,6 +147,7 @@ public class GameSession {
         ws.sendMessage(playerIdInfoMsgBin);
         ws.sendMessage(tokenMsgBin);
         ws.sendMessage(boardInfoMsgBin);
+        ws.sendMessage(playerCountInfoMsgBin);
 
         App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
         if (playerNumber == this.config.getPlayerCount()) {

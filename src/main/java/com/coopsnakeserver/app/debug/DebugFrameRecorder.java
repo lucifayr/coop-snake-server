@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Player;
 
@@ -30,7 +31,7 @@ public class DebugFrameRecorder {
         try {
             recordActual(player, frame);
         } catch (Exception e) {
-            System.out.println(String.format("failed to record data for player %02d in session %s",
+            App.logger().warn(String.format("failed to record data for player %02d in session %s",
                     player.getValue(), this.sessionKey));
             e.printStackTrace();
         }
@@ -40,7 +41,7 @@ public class DebugFrameRecorder {
         try {
             recordGameOverActual();
         } catch (Exception e) {
-            System.out.println(String.format("failed to record game over in session %s", this.sessionKey));
+            App.logger().warn(String.format("failed to record game over in session %s", this.sessionKey));
             e.printStackTrace();
         }
     }

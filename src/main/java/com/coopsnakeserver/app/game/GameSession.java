@@ -33,6 +33,7 @@ public class GameSession {
 
     private int sessionKey;
     private GameSessionState gameState = GameSessionState.WaitingForPlayers;
+    private boolean closed = false;
 
     private GameSessionConfig config;
 
@@ -55,7 +56,6 @@ public class GameSession {
                     if (gameOver.isPresent()) {
                         this.gameState = GameSessionState.GameOver;
                         notifyGameOver(gameOver.get());
-                        teardown();
 
                         return;
                     }
@@ -64,7 +64,7 @@ public class GameSession {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println(String.format("Uncaught exception session %06d", this.sessionKey));
+                App.logger().info(String.format("Uncaught exception session %06d", this.sessionKey));
 
                 teardown();
             }
@@ -72,7 +72,7 @@ public class GameSession {
 
         this.tickFunc = future;
 
-        System.out.println(String.format("Created session %06d", this.sessionKey));
+        App.logger().info(String.format("Created session %06d", this.sessionKey));
     }
 
     public void disconnectPlayer(byte playerNumber) {
@@ -94,6 +94,10 @@ public class GameSession {
 
     public void connectPlayer(byte playerNumber, WebSocketSession ws)
             throws IOException {
+        if (this.closed) {
+            return;
+        }
+
         if (playerNumber > this.config.getPlayerCount()) {
             App.logger()
                     .warn(String.format(
@@ -136,12 +140,12 @@ public class GameSession {
         ws.sendMessage(tokenMsgBin);
         ws.sendMessage(boardInfoMsgBin);
 
-        System.out.println("Player connected : " + player);
+        App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
 
         if (playerNumber == this.config.getPlayerCount()) {
             this.gameState = GameSessionState.Running;
 
-            System.out.println(String.format("Starting game for session %06d", this.sessionKey));
+            App.logger().info(String.format("Starting game for session %06d", this.sessionKey));
         }
     }
 
@@ -155,9 +159,23 @@ public class GameSession {
     }
 
     public void teardown() {
+        if (this.closed) {
+            return;
+        }
+
+        this.closed = true;
         this.tickFunc.cancel(true);
 
-        System.out.println(String.format("Closed session %06d", this.sessionKey));
+        for (var loop : this.loops.values()) {
+            try {
+                loop.getConnection().close();
+            } catch (Exception e) {
+                App.logger().warn(String.format("Failed to send close signal to connection %s in session %06d",
+                        loop.getConnection().getId(), this.sessionKey));
+            }
+        }
+
+        App.logger().info(String.format("Closed session %06d", this.sessionKey));
     }
 
     public List<PlayerGameLoop> getOtherLoops(Player me) {

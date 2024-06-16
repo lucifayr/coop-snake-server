@@ -2,12 +2,12 @@ package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Optional;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
@@ -156,7 +156,7 @@ public class PlayerGameLoop {
         }
 
         if ((double) ticksDueToLatencyDelta / (double) GameSession.TICKS_PER_SECOND > 0.3) {
-            System.out.println("WARNING: latency is very high. delay in ticks = " + ticksDueToLatencyDelta);
+            App.logger().warn("Latency is very high. delay in ticks = " + ticksDueToLatencyDelta);
         }
 
         var frame = this.state.canonicalFrame();
@@ -202,8 +202,6 @@ public class PlayerGameLoop {
         var foodCoord = lastFrame.getFoodCoord();
         return foodCoord.equals(snakeHead);
     }
-
-    // private boolean isCollidingWithOtherSnake() {}
 
     private record SnakeInfo(ArrayDeque<Coordinate> coords, SnakeDirection direction, boolean hasEatenFood) {
     }

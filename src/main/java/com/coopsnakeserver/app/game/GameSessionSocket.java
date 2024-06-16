@@ -12,6 +12,7 @@ import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.pojo.Player;
 
 import com.coopsnakeserver.app.GameBinaryMessage;
+import com.coopsnakeserver.app.GameSessionController;
 import com.coopsnakeserver.app.debug.DebugFlag;
 
 /**
@@ -28,14 +29,16 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     public static final byte MIN_PLAYER_COUNT = 2;
     public static final short MIN_INTIIAL_SNAKE_SIZE = 3;
 
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private final GameSessionController controler;
 
     private int sessionKey;
     private GameSession gameSession;
 
     private byte nextPlayer = 1;
 
-    public GameSessionSocket(int sessionKey, GameSessionConfig config) {
+    public GameSessionSocket(int sessionKey, GameSessionConfig config, GameSessionController controler) {
+        this.controler = controler;
         this.sessionKey = sessionKey;
         this.gameSession = new GameSession(this.sessionKey, config, executor);
     }
@@ -51,7 +54,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
     }
 
-    // TODO: handle disconnects properly
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         if (this.gameSession.getState() == GameSessionState.WaitingForPlayers) {
@@ -59,6 +61,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
             nextPlayer -= 1;
         } else {
             this.gameSession.teardown();
+            controler.removeSession(this.sessionKey);
         }
     }
 

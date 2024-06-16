@@ -31,7 +31,7 @@ public class GameSessionController {
         }
 
         var key = uniqueSessionKey();
-        sessions.put(key, new GameSessionSocket(key, config));
+        sessions.put(key, new GameSessionSocket(key, config, this));
 
         return ResponseEntity.ok(String.format("%06d", key));
     }
@@ -77,6 +77,10 @@ public class GameSessionController {
 
     public HashMap<Integer, GameSessionSocket> getSessions() {
         return sessions;
+    }
+
+    public void removeSession(int key) {
+        this.sessions.remove(key);
     }
 
     private int uniqueSessionKey() {

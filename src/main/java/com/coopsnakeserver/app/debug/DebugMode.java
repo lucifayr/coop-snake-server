@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
 
+import com.coopsnakeserver.app.App;
 import com.coopsnakeserver.app.DevUtils;
 import com.coopsnakeserver.app.game.frame.PlayerGameFrame;
 import com.coopsnakeserver.app.pojo.Player;
@@ -91,9 +92,8 @@ public class DebugMode {
             INSTANCE = new DebugMode(messageInLatency, randomSeed, playbackFrames,
                     recordFrames);
 
-            System.out
-                    .println("Initialized debug mode from env.\nEnabled flags: "
-                            + Arrays.toString(INSTANCE.enabledFlags.toArray()));
+            App.logger().info("Initialized debug mode from env.\nEnabled flags: "
+                    + Arrays.toString(INSTANCE.enabledFlags.toArray()));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -28,8 +28,8 @@ public class DebugMode {
 
     private static DebugMode INSTANCE;
 
-    private DebugMode(Optional<Long> messageInLatency, Optional<Long> seed,
-            boolean wrapOnOutOfBounds, boolean playbackFrames, boolean recordFrames) throws IOException {
+    private DebugMode(Optional<Long> messageInLatency, Optional<Long> seed, boolean playbackFrames,
+            boolean recordFrames) throws IOException {
         if (messageInLatency.isPresent()) {
             this.enabledFlags.add(DebugFlag.MessageInputLatency);
             this.DEBUG_MESSAGE_IN_LATENCY = messageInLatency.get();
@@ -42,10 +42,6 @@ public class DebugMode {
             this.random = new Random(seed.get());
         } else {
             this.random = null;
-        }
-
-        if (wrapOnOutOfBounds) {
-            this.enabledFlags.add(DebugFlag.WrapAroundOnOutOfBounds);
         }
 
         if (recordFrames) {
@@ -85,9 +81,6 @@ public class DebugMode {
             }
         }
 
-        var wrapEnv = System.getenv(DebugFlag.WrapAroundOnOutOfBounds.getEnvKey());
-        var wrapOnOutOfBounds = wrapEnv != null && wrapEnv.equals("true");
-
         var recordEnv = System.getenv(DebugFlag.RecordFrames.getEnvKey());
         var recordFrames = recordEnv != null && recordEnv.equals("true");
 
@@ -95,7 +88,7 @@ public class DebugMode {
         var playbackFrames = playbacbEnv != null && playbacbEnv.equals("true");
 
         try {
-            INSTANCE = new DebugMode(messageInLatency, randomSeed, wrapOnOutOfBounds, playbackFrames,
+            INSTANCE = new DebugMode(messageInLatency, randomSeed, playbackFrames,
                     recordFrames);
 
             System.out

@@ -11,7 +11,6 @@ public enum DebugFlag {
     PlaybackFrames(Namespace.KEY + "_PLAYBACK_FRAMES"),
     RecordFrames(Namespace.KEY + "_RECORD_FRAMES"),
     MessageInputLatency(Namespace.KEY + "_MESSAGE_INPUT_LATENCY"),
-    WrapAroundOnOutOfBounds(Namespace.KEY + "_WRAP_ON_OUT_OF_BOUNDS"),
     SeedRandom(Namespace.KEY + "_SEED_RANDOM");
 
     private final String envKey;

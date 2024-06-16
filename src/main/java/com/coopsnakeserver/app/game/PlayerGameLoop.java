@@ -60,11 +60,6 @@ public class PlayerGameLoop {
         var newSnakeDirection = processSwipeInput();
         var snakeInfo = nextSnakeInfo(newSnakeDirection);
 
-        if (GameUtils.headOutOfBounds(snakeInfo.coords().getFirst(), this.state.getBoardSize())) {
-            DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
-            return Optional.of(GameOverCause.CollisionBounds);
-        }
-
         if (GameUtils.headSelfCollision(snakeInfo.coords().getFirst(), snakeInfo.coords().stream().toList())) {
             DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionSelf);
@@ -180,10 +175,7 @@ public class PlayerGameLoop {
         var direction = newDirection.orElseGet(() -> lastFrame.getSnakeDirection());
 
         var snakeHead = coords.peekFirst();
-        var snakeHeadNext = GameUtils.nextHead(snakeHead, direction);
-        if (DebugMode.instanceHasFlag(DebugFlag.WrapAroundOnOutOfBounds)) {
-            snakeHeadNext = GameUtils.wrappedHead(snakeHeadNext, state.getBoardSize());
-        }
+        var snakeHeadNext = GameUtils.wrappedHead(GameUtils.nextHead(snakeHead, direction), state.getBoardSize());
 
         var hasEatenFood = isEatingFood(snakeHeadNext);
         coords.addFirst(snakeHeadNext);

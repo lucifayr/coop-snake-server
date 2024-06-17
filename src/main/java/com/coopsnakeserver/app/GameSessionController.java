@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +24,17 @@ import com.coopsnakeserver.app.game.GameUtils;
 @RestController
 public class GameSessionController {
     private final HashMap<Integer, GameSessionSocket> sessions = new HashMap<>();
+
+    @GetMapping("/game/session/{key}/config")
+    private ResponseEntity<GameSessionConfig> getConfig(@PathVariable Integer key) {
+        var session = sessions.get(key);
+        if (session == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var config = session.getSessionConfig();
+        return ResponseEntity.ok(config);
+    }
 
     @PostMapping("/game/session/new")
     private ResponseEntity<String> newEmployee(@RequestBody GameSessionConfig config) {

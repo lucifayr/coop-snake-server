@@ -1,5 +1,6 @@
 package com.coopsnakeserver.app;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -30,7 +31,7 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
     }
 
     @Override
-    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
         var key = keyFromUri(session);
         if (!key.isPresent()) {
             return;
@@ -41,11 +42,16 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
             return;
         }
 
-        handler.handleMessage(session, message);
+        try {
+            handler.handleMessage(session, message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            App.logger().error("Expection thrown during message processing");
+        }
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(WebSocketSession session) {
         var key = keyFromUri(session);
         if (!key.isPresent()) {
             return;
@@ -61,7 +67,7 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         var key = keyFromUri(session);
         if (!key.isPresent()) {
             return;
@@ -72,13 +78,13 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
             return;
         }
 
-        handler.afterConnectionClosed(session, status);
+        var isView = isViewUri(session);
+        handler.customAfterConnectionClosed(session, isView);
     }
 
     private boolean isViewUri(WebSocketSession session) {
         var uri = session.getUri().getPath();
         var urlWithoutKey = uri.substring(0, uri.lastIndexOf('/'));
-        System.out.println("url without key " + urlWithoutKey);
         return urlWithoutKey.endsWith("/view");
     }
 

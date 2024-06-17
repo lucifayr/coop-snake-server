@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.springframework.web.socket.BinaryMessage;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
@@ -44,7 +43,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     }
 
     public void customAfterConnectionEstablished(WebSocketSession ws, boolean isView) {
-
         try {
             if (isView) {
                 gameSession.connectViewer(ws);
@@ -59,8 +57,12 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
 
     }
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public void customAfterConnectionClosed(WebSocketSession session, boolean isView) {
+        if (isView) {
+            this.gameSession.disconnectViewer(session);
+            return;
+        }
+
         if (this.gameSession.getState() == GameSessionState.WaitingForPlayers) {
             this.gameSession.disconnectPlayer((byte) (this.nextPlayer - 1));
             nextPlayer -= 1;
@@ -98,5 +100,9 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         }
 
         gameSession.handleBinWsMsg(message);
+    }
+
+    public GameSessionConfig getSessionConfig() {
+        return this.gameSession.getConfig();
     }
 }

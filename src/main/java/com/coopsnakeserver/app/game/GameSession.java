@@ -206,6 +206,12 @@ public class GameSession {
         App.logger().info(String.format("Viewer(%s) connected to session %06d", ws.getId(), sessionKey));
     }
 
+    public void disconnectViewer(WebSocketSession ws) {
+        this.viewers.removeIf(v -> {
+            return v.getId().equals(ws.getId());
+        });
+    }
+
     public void teardown() {
         if (this.closed) {
             return;
@@ -269,6 +275,10 @@ public class GameSession {
         return this.config.getBoardSize();
     }
 
+    public GameSessionConfig getConfig() {
+        return this.config;
+    }
+
     public void enableDebugFrameReplay(int sessionKey, Player player, Player lastConnectedPlayer) {
         var loop = this.loops.get(lastConnectedPlayer);
         if (loop == null) {
@@ -300,13 +310,22 @@ public class GameSession {
     }
 
     private void notifyConnections(GameBinaryMessage msg) {
-        for (var l : this.loops.values()) {
+        for (var loop : this.loops.values()) {
             try {
-                l.getConnection().sendMessage(new BinaryMessage(msg.intoBytes()));
+                loop.getConnection().sendMessage(new BinaryMessage(msg.intoBytes()));
             } catch (Exception e) {
                 e.printStackTrace();
                 App.logger().warn(String.format("Failed to notify connection %s. Message = %s",
-                        l.getConnection().getId(), msg));
+                        loop.getConnection().getId(), msg));
+            }
+        }
+        for (var ws : this.viewers) {
+            try {
+                ws.sendMessage(new BinaryMessage(msg.intoBytes()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                App.logger().warn(String.format("Failed to notify viewer %s. Message = %s",
+                        ws.getId(), msg));
             }
         }
     }

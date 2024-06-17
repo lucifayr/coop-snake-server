@@ -1,6 +1,7 @@
 package com.coopsnakeserver.app.game;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ public class GameSession {
 
     private GameSessionConfig config;
 
+    private List<WebSocketSession> viewers = new ArrayList<>();
     private HashMap<Player, PlayerGameLoop> loops = new HashMap<>();
     private HashMap<PlayerToken, Player> tokenOwners = new HashMap<>();
     private HashSet<PlayerToken> restartConfirmations = new HashSet<>();
@@ -55,8 +57,8 @@ public class GameSession {
             }
 
             try {
-                for (var l : this.loops.values()) {
-                    var gameOver = l.tick();
+                for (var loop : this.loops.values()) {
+                    var gameOver = loop.tick();
                     if (gameOver.isPresent()) {
                         this.gameState = GameSessionState.GameOver;
 
@@ -76,9 +78,16 @@ public class GameSession {
 
                         return;
                     }
-
-                    l.updateWsClients();
                 }
+
+                for (var loop : this.loops.values()) {
+                    notifyGameStateUpdate(loop.getConnection());
+                }
+
+                for (var ws : this.viewers) {
+                    notifyGameStateUpdate(ws);
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 App.logger().info(String.format("Uncaught exception session %06d", this.sessionKey));
@@ -175,6 +184,28 @@ public class GameSession {
         notifyWaitingFor(playerNumber);
     }
 
+    public void connectViewer(WebSocketSession ws) throws IOException {
+        if (this.closed) {
+            return;
+        }
+
+        var boardInfo = new SessionInfo(SessionInfoType.BoardSize,
+                BinaryUtils.int32ToBytes((int) this.config.getBoardSize()));
+        var boardInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, boardInfo.intoBytes());
+        var boardInfoMsgBin = new BinaryMessage(boardInfoMsg.intoBytes());
+
+        var playerCountInfo = new SessionInfo(SessionInfoType.PlayerCount,
+                BinaryUtils.int32ToBytes((int) this.config.getPlayerCount()));
+        var playerCountInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, playerCountInfo.intoBytes());
+        var playerCountInfoMsgBin = new BinaryMessage(playerCountInfoMsg.intoBytes());
+
+        ws.sendMessage(boardInfoMsgBin);
+        ws.sendMessage(playerCountInfoMsgBin);
+
+        this.viewers.add(ws);
+        App.logger().info(String.format("Viewer(%s) connected to session %06d", ws.getId(), sessionKey));
+    }
+
     public void teardown() {
         if (this.closed) {
             return;
@@ -253,6 +284,19 @@ public class GameSession {
         }).sum();
 
         return score;
+    }
+
+    private void notifyGameStateUpdate(WebSocketSession ws) throws IOException {
+        for (var loop : this.loops.values()) {
+            var foodMsg = loop.getFoodMsg();
+            var foodMsgBin = new BinaryMessage(foodMsg.intoBytes());
+
+            var playerMsg = loop.getPlayerMsg();
+            var playerMsgBin = new BinaryMessage(playerMsg.intoBytes());
+
+            ws.sendMessage(playerMsgBin);
+            ws.sendMessage(foodMsgBin);
+        }
     }
 
     private void notifyConnections(GameBinaryMessage msg) {

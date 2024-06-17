@@ -1,10 +1,8 @@
 package com.coopsnakeserver.app.game;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Optional;
 
-import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.coopsnakeserver.app.App;
@@ -93,29 +91,6 @@ public class PlayerGameLoop {
         this.tickN = 0;
         this.foodEaten = 0;
         this.state.reset();
-    }
-
-    public void updateWsClients() throws IOException {
-        var foodMsg = getFoodMsg();
-        var foodMsgBin = new BinaryMessage(foodMsg.intoBytes());
-
-        var playerMsg = getPlayerMsg();
-        var playerMsgBin = new BinaryMessage(playerMsg.intoBytes());
-
-        var ws = this.state.getConnection();
-        ws.sendMessage(playerMsgBin);
-        ws.sendMessage(foodMsgBin);
-
-        for (var loop : this.parentSession.getOtherLoops(this.state.getPlayer())) {
-            var otherFoodMsg = loop.getFoodMsg();
-            var otherFoodMsgBin = new BinaryMessage(otherFoodMsg.intoBytes());
-
-            var otherPlayerMsg = loop.getPlayerMsg();
-            var otherPlayerMsgBin = new BinaryMessage(otherPlayerMsg.intoBytes());
-
-            ws.sendMessage(otherPlayerMsgBin);
-            ws.sendMessage(otherFoodMsgBin);
-        }
     }
 
     public int getFoodEaten() {

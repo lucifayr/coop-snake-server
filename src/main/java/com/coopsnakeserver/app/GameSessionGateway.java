@@ -35,8 +35,8 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
         if (!key.isPresent()) {
             return;
         }
-        var handler = controller.getSessions().get(key.get());
 
+        var handler = controller.getSessions().get(key.get());
         if (handler == null) {
             return;
         }
@@ -50,13 +50,14 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
         if (!key.isPresent()) {
             return;
         }
-        var handler = controller.getSessions().get(key.get());
 
+        var handler = controller.getSessions().get(key.get());
         if (handler == null) {
             return;
         }
 
-        handler.afterConnectionEstablished(session);
+        var isView = isViewUri(session);
+        handler.customAfterConnectionEstablished(session, isView);
     }
 
     @Override
@@ -72,6 +73,13 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
         }
 
         handler.afterConnectionClosed(session, status);
+    }
+
+    private boolean isViewUri(WebSocketSession session) {
+        var uri = session.getUri().getPath();
+        var urlWithoutKey = uri.substring(0, uri.lastIndexOf('/'));
+        System.out.println("url without key " + urlWithoutKey);
+        return urlWithoutKey.endsWith("/view");
     }
 
     private Optional<Integer> keyFromUri(WebSocketSession session) {

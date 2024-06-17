@@ -43,9 +43,14 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         this.gameSession = new GameSession(this.sessionKey, config, executor);
     }
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession ws) {
+    public void customAfterConnectionEstablished(WebSocketSession ws, boolean isView) {
+
         try {
+            if (isView) {
+                gameSession.connectViewer(ws);
+                return;
+            }
+
             this.nextPlayer += 1;
             gameSession.connectPlayer(this.nextPlayer, ws);
         } catch (IOException e) {

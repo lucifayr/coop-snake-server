@@ -49,6 +49,7 @@ public class GameSession {
     private GameSessionConfig config;
 
     private List<WebSocketSession> viewers = new ArrayList<>();
+    private HashMap<String, Player> wsIdPlayerLookupTable = new HashMap<>();
     private HashMap<Player, PlayerGameLoop> loops = new HashMap<>();
     private HashMap<PlayerToken, Player> tokenOwners = new HashMap<>();
     private HashSet<PlayerToken> restartConfirmations = new HashSet<>();
@@ -111,60 +112,35 @@ public class GameSession {
         App.logger().info(String.format("Created session %06d", this.sessionKey));
     }
 
-    public void disconnectPlayer(byte playerNumber) {
-        if (this.gameState != GameSessionState.WaitingForPlayers) {
-            App.logger().warn(
-                    "Trying to disconnect from running session.Disconnect will be ignored.",
-                    this.gameState);
-        }
-
-        var playerOpt = Player.fromByte(playerNumber);
-        if (playerOpt.isEmpty()) {
-            App.logger().warn(String.format("Received invalid player number %d", playerNumber));
-            return;
-        }
-
-        var player = playerOpt.get();
-        this.loops.remove(player);
-
-        notifyWaitingFor(playerNumber);
-    }
-
     /**
      * Connect a player to the session. After the session is full or has been
      * closed, no more connections are accepted.
-     *
-     * @param playerNumber The number of the player. Starts at
-     *                     <strong>1</strong> and should always be
-     *                     <strong>1</strong> larger than
-     *                     the previously provided number, otherwise the connection
-     *                     is ignored.
      */
-    public void connectPlayer(byte playerNumber, WebSocketSession ws)
+    public void connectPlayer(WebSocketSession ws)
             throws IOException {
         if (this.closed) {
             return;
         }
 
-        if (playerNumber > this.config.getPlayerCount()) {
+        removeClosedPlayerConnections();
+
+        if (this.loops.size() > this.config.getPlayerCount()) {
             App.logger()
                     .warn(String.format(
-                            "Extra player tried to connect. Expected max = %d. Received player number %d",
-                            this.config.getPlayerCount(), playerNumber));
+                            "Extra player tried to connect. Max %d. WebScoket id = %s",
+                            this.config.getPlayerCount(), ws.getId()));
             return;
         }
 
-        var playerOpt = Player.fromByte(playerNumber);
+        var countConnected = this.loops.size();
+        var playerByte = (byte) (countConnected + 1);
+        var playerOpt = Player.fromByte(playerByte);
         if (playerOpt.isEmpty()) {
-            App.logger().warn(String.format("Received invalid player number %d", playerNumber));
+            App.logger().warn(String.format("Failed to get next player with byte %d", playerByte));
             return;
         }
 
         var player = playerOpt.get();
-        if (this.loops.containsKey(player)) {
-            App.logger().warn(String.format("Player already connected. %s", player));
-            return;
-        }
 
         var otherTokens = this.loops.values().stream().map(l -> l.getToken()).collect(Collectors.toList());
         var token = PlayerToken.genRandom(otherTokens);
@@ -196,12 +172,30 @@ public class GameSession {
         ws.sendMessage(playerCountInfoMsgBin);
 
         App.logger().info(String.format("%s connected to session %06d", player, sessionKey));
-        if (playerNumber == this.config.getPlayerCount()) {
+        if (playerByte == this.config.getPlayerCount()) {
             this.gameState = GameSessionState.Running;
             App.logger().info(String.format("Starting game for session %06d", this.sessionKey));
         }
 
-        notifyWaitingFor(playerNumber);
+        notifyWaitingFor(playerByte);
+    }
+
+    public void disconnectPlayer(WebSocketSession ws) {
+        if (this.gameState != GameSessionState.WaitingForPlayers) {
+            App.logger().warn(
+                    "Trying to disconnect from running session.Disconnect will be ignored.",
+                    this.gameState);
+        }
+
+        var player = this.wsIdPlayerLookupTable.get(ws.getId());
+        if (player == null) {
+            App.logger()
+                    .warn(String.format("No player in the session is connect with the socket(id = %s)", ws.getId()));
+            return;
+        }
+
+        this.loops.remove(player);
+        notifyWaitingFor((byte) this.loops.size());
     }
 
     /**
@@ -306,13 +300,18 @@ public class GameSession {
         return this.config;
     }
 
-    public void enableDebugFrameReplay(int sessionKey, Player player, Player lastConnectedPlayer) {
-        var loop = this.loops.get(lastConnectedPlayer);
+    public void enableDebugFrameReplay(int replayDataSessionKey, Player replayDataPlayer, String wsId) {
+        var player = this.wsIdPlayerLookupTable.get(wsId);
+        if (player == null) {
+            return;
+        }
+
+        var loop = this.loops.get(player);
         if (loop == null) {
             return;
         }
 
-        loop.enableDebugFrameReplay(sessionKey, player);
+        loop.enableDebugFrameReplay(replayDataSessionKey, replayDataPlayer);
     }
 
     private int getScore() {
@@ -321,6 +320,17 @@ public class GameSession {
         }).sum();
 
         return score;
+    }
+
+    private void removeClosedPlayerConnections() {
+        for (var entry : this.loops.entrySet()) {
+            if (!entry.getValue().getConnection().isOpen()) {
+                App.logger().info(String.format("Removing closed player connection (socket-id = %s)",
+                        entry.getValue().getConnection().getId()));
+                this.loops.remove(entry.getKey());
+            }
+
+        }
     }
 
     private void notifyGameStateUpdate(WebSocketSession ws) throws IOException {
@@ -357,8 +367,8 @@ public class GameSession {
         }
     }
 
-    private void notifyWaitingFor(byte playerNumber) {
-        var waitingFor = this.config.getPlayerCount() - playerNumber;
+    private void notifyWaitingFor(byte count) {
+        var waitingFor = this.config.getPlayerCount() - count;
         var waitingForInfo = new SessionInfo(SessionInfoType.WaitingFor, BinaryUtils.int32ToBytes(waitingFor));
         var waitingForInfoMsg = new GameBinaryMessage(GameMessageType.SessionInfo, waitingForInfo.intoBytes());
 

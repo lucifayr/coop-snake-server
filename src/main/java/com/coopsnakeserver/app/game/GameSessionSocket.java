@@ -34,8 +34,6 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
     private int sessionKey;
     private GameSession gameSession;
 
-    private byte nextPlayer = 0;
-
     public GameSessionSocket(int sessionKey, GameSessionConfig config, GameSessionController controler) {
         this.controler = controler;
         this.sessionKey = sessionKey;
@@ -49,8 +47,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
                 return;
             }
 
-            this.nextPlayer += 1;
-            gameSession.connectPlayer(this.nextPlayer, ws);
+            gameSession.connectPlayer(ws);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,8 +61,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
         }
 
         if (this.gameSession.getState() == GameSessionState.WaitingForPlayers) {
-            this.gameSession.disconnectPlayer((byte) (this.nextPlayer - 1));
-            nextPlayer -= 1;
+            this.gameSession.disconnectPlayer(session);
         } else {
             this.gameSession.teardown();
             controler.removeSession(this.sessionKey);
@@ -82,10 +78,7 @@ public class GameSessionSocket extends BinaryWebSocketHandler {
                 var sessionKey = bytes.getInt(1);
                 var player = Player.fromByte(bytes.get(5)).get();
 
-                // massive hack :)
-                var lastConnectedPlayer = Player.fromByte((byte) (this.nextPlayer - 1)).get();
-
-                gameSession.enableDebugFrameReplay(sessionKey, player, lastConnectedPlayer);
+                gameSession.enableDebugFrameReplay(sessionKey, player, session.getId());
                 return;
             }
         }

@@ -333,7 +333,7 @@ public class GameSession {
         }
     }
 
-    private void notifyGameStateUpdate(WebSocketSession ws) throws IOException {
+    private void notifyGameStateUpdate(WebSocketSession ws) {
         for (var loop : this.loops.values()) {
             var foodMsg = loop.getFoodMsg();
             var foodMsgBin = new BinaryMessage(foodMsg.intoBytes());
@@ -341,8 +341,15 @@ public class GameSession {
             var playerMsg = loop.getPlayerMsg();
             var playerMsgBin = new BinaryMessage(playerMsg.intoBytes());
 
-            ws.sendMessage(playerMsgBin);
-            ws.sendMessage(foodMsgBin);
+            try {
+                ws.sendMessage(playerMsgBin);
+                ws.sendMessage(foodMsgBin);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                App.logger().warn(String.format("Failed to notify connection %s of game state update.",
+                        loop.getConnection().getId()));
+            }
         }
     }
 

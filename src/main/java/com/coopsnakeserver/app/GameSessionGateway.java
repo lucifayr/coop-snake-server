@@ -1,6 +1,5 @@
 package com.coopsnakeserver.app;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -18,12 +17,19 @@ import com.coopsnakeserver.app.game.GameSessionSocket;
 /**
  * GameSessionGateway
  *
+ * Forwards WebSocket messages to the correct session by {@code}key{@code}.
+ *
+ * <br>
+ * <br>
+ *
  * created: 07.06.2024
  *
  * @author June L. Gschwantner
  */
 @Controller
 public class GameSessionGateway extends BinaryWebSocketHandler {
+    public static final String URL_PREFIX_SESSION_VIEW = "/game/session/view";
+    public static final String URL_PREFIX_SESSION_JOIN = "/game/session";
     private final GameSessionController controller;
 
     public GameSessionGateway(GameSessionController controller) {
@@ -84,8 +90,7 @@ public class GameSessionGateway extends BinaryWebSocketHandler {
 
     private boolean isViewUri(WebSocketSession session) {
         var uri = session.getUri().getPath();
-        var urlWithoutKey = uri.substring(0, uri.lastIndexOf('/'));
-        return urlWithoutKey.endsWith("/view");
+        return uri.startsWith(GameSessionGateway.URL_PREFIX_SESSION_VIEW + "/");
     }
 
     private Optional<Integer> keyFromUri(WebSocketSession session) {

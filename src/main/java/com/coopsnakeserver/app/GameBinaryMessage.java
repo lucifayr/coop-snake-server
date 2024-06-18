@@ -22,8 +22,8 @@ import com.coopsnakeserver.app.pojo.GameMessageType;
  * @author June L. Gschwantner
  */
 public class GameBinaryMessage implements IntoBytes {
-    // massive hack/shortcut, future me please forgive me I only have 1 week to
-    // get this all done :-:
+    // HACK: allows reading in debug messages which can be used to enable debug
+    // features at runtime.
     public static final byte DEBUG_MESSAGE_IDENTIFIER = Byte.MAX_VALUE;
 
     public static final byte MESSAGE_VERSION = 1;

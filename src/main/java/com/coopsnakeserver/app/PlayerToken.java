@@ -11,6 +11,12 @@ import com.coopsnakeserver.app.pojo.SessionInfo;
 /**
  * PlayerInputToken
  *
+ * Attached to binary messages that are received from players. Used to validate
+ * the input and determine which player it belongs to.
+ *
+ * <br>
+ * <br>
+ *
  * created: 30.05.2024
  *
  * @author June L. Gschwantner

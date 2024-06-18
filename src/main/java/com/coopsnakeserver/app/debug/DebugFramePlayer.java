@@ -14,6 +14,13 @@ import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SnakeDirection;
 
 /**
+ * DebugFramePlayer
+ *
+ * Used to replay recorded sessions on demand.
+ *
+ * <br>
+ * <br>
+ *
  * created: 05.06.2024
  *
  * @author June L. Gschwantner

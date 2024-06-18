@@ -3,6 +3,11 @@ package com.coopsnakeserver.app.debug;
 /**
  * DebugFlags
  *
+ * List of supported debug settings.
+ *
+ * <br>
+ * <br>
+ *
  * created: 25.05.2024
  *
  * @author June L. Gschwantner

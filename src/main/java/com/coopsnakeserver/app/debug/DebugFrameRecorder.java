@@ -15,6 +15,12 @@ import com.coopsnakeserver.app.pojo.Player;
 /**
  * DebugFrameRecorder
  *
+ * Can record all frames in a game session to disk to be replayed at a later
+ * date. See {@code}DebugFramePlayer{@code} for playback.
+ *
+ * <br>
+ * <br>
+ *
  * created: 05.06.2024
  *
  * @author June L. Gschwantner

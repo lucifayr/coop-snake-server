@@ -22,6 +22,9 @@ import com.coopsnakeserver.app.pojo.SnakeDirection;
 /**
  * PlayerGameLoop
  *
+ * Provides an API to update a single players state (e.g. position) on every
+ * tick.
+ *
  * created: 30.05.2024
  *
  * @author June L. Gschwantner
@@ -42,7 +45,11 @@ public class PlayerGameLoop {
         this.state = state;
     }
 
-    public Optional<GameOverCause> tick() {
+    /**
+     * Update the players position, handle eating food, and update internal
+     * tick. Should be called once per game tick.
+     */
+    public void tick() {
         this.tickN += 1;
 
         if (DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
@@ -52,14 +59,38 @@ public class PlayerGameLoop {
 
             if (frame.isPresent()) {
                 this.state.newCanonicalFrame(frame.get());
-                return Optional.empty();
+                return;
             }
         }
 
         var newSnakeDirection = processSwipeInput();
         var snakeInfo = nextSnakeInfo(newSnakeDirection);
 
-        if (GameUtils.headSelfCollision(snakeInfo.coords().getFirst(), snakeInfo.coords().stream().toList())) {
+        if (snakeInfo.hasEatenFood) {
+            this.foodEaten += 1;
+        }
+
+        var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
+        var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
+        this.state.newCanonicalFrame(frame);
+    }
+
+    /**
+     * Check for game over conditions. This should always be called after
+     * <strong>EVERY</strong> player's position has been updated by calling
+     * {@code}tick{@code}.
+     *
+     * @return - {@code}Optional.empty{@code} if no game over condition was
+     *         triggered by the
+     *         player.
+     *         <br>
+     *         - {@code}Optional.of(condition){@code} if a game over was triggered
+     *         by
+     *         the player
+     */
+    public Optional<GameOverCause> checkGameOver() {
+        var frame = this.getCanonicalFrame();
+        if (GameUtils.headSelfCollision(frame.getSnakeCoords().getFirst(), frame.getSnakeCoords().stream().toList())) {
             DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionSelf);
         }
@@ -70,18 +101,10 @@ public class PlayerGameLoop {
                     return coords.stream();
                 }).toList();
 
-        if (GameUtils.headOtherCollision(snakeInfo.coords().getFirst(), otherSnakeCoords)) {
+        if (GameUtils.headOtherCollision(frame.getSnakeCoords().getFirst(), otherSnakeCoords)) {
             DebugMode.recordGameOverIfEnabled(this.state.getSessionKey());
             return Optional.of(GameOverCause.CollisionOther);
         }
-
-        if (snakeInfo.hasEatenFood) {
-            this.foodEaten += 1;
-        }
-
-        var food = nextFood(snakeInfo.hasEatenFood, snakeInfo.coords());
-        var frame = new PlayerGameFrame(snakeInfo.coords, snakeInfo.direction, food);
-        this.state.newCanonicalFrame(frame);
 
         return Optional.empty();
     }

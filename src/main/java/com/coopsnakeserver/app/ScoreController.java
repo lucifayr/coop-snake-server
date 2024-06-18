@@ -8,6 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.coopsnakeserver.app.DBUtils.HighScore;
 
 /**
+ * ScoreController
+ *
+ * REST API endpoints to query score information.
+ *
+ * <br>
+ * <br>
  *
  * created: 16.06.2024
  *

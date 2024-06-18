@@ -26,6 +26,13 @@ import com.coopsnakeserver.app.pojo.SessionInfo;
 import com.coopsnakeserver.app.pojo.SessionInfoType;
 
 /**
+ * GameSession
+ *
+ * Manages game state and notifies connected players of state changes via
+ * WebSockets.
+ *
+ * <br>
+ * <br>
  *
  * created: 25.05.2024
  *
@@ -58,7 +65,12 @@ public class GameSession {
 
             try {
                 for (var loop : this.loops.values()) {
-                    var gameOver = loop.tick();
+                    loop.tick();
+                }
+
+                for (var loop : this.loops.values()) {
+                    var gameOver = loop.checkGameOver();
+
                     if (gameOver.isPresent()) {
                         this.gameState = GameSessionState.GameOver;
 
@@ -78,9 +90,7 @@ public class GameSession {
 
                         return;
                     }
-                }
 
-                for (var loop : this.loops.values()) {
                     notifyGameStateUpdate(loop.getConnection());
                 }
 
@@ -120,6 +130,16 @@ public class GameSession {
         notifyWaitingFor(playerNumber);
     }
 
+    /**
+     * Connect a player to the session. After the session is full or has been
+     * closed, no more connections are accepted.
+     *
+     * @param playerNumber The number of the player. Starts at
+     *                     <strong>1</strong> and should always be
+     *                     <strong>1</strong> larger than
+     *                     the previously provided number, otherwise the connection
+     *                     is ignored.
+     */
     public void connectPlayer(byte playerNumber, WebSocketSession ws)
             throws IOException {
         if (this.closed) {
@@ -184,6 +204,13 @@ public class GameSession {
         notifyWaitingFor(playerNumber);
     }
 
+    /**
+     * Connect a viewer to the session. Viewers receive frame data but cannot
+     * interact with the game. Unlike the number of players, the number of
+     * viewers is not limited.
+     *
+     * @param ws Connection to send game state update to.
+     */
     public void connectViewer(WebSocketSession ws) throws IOException {
         if (this.closed) {
             return;

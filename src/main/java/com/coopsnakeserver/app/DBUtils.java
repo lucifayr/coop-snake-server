@@ -11,6 +11,10 @@ import java.util.List;
  * @author June L. Gschwantner
  */
 public class DBUtils {
+    /**
+     * Create any tables that are needed but that don't yet exist. If all tables
+     * already exist this function does nothing.
+     */
     public static final void initTables() {
         try {
             var statment = App.dbConnection().createStatement();

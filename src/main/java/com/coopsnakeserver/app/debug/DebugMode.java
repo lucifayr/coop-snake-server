@@ -15,6 +15,11 @@ import com.coopsnakeserver.app.pojo.Player;
 /**
  * DebugData
  *
+ * Manages debug behavior.
+ *
+ * <br>
+ * <br>
+ *
  * created: 25.05.2024
  *
  * @author June L. Gschwantner
@@ -55,6 +60,9 @@ public class DebugMode {
 
     }
 
+    /**
+     * Load debug settings based on system environment variables.
+     */
     public static void initFromEnv() {
         var debug = System.getenv(DebugFlag.Namespace.KEY);
         var debugEnabled = debug == null || !debug.equals("true");

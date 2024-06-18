@@ -17,6 +17,11 @@ import com.coopsnakeserver.app.game.GameUtils;
 /**
  * GameSessionController
  *
+ * Rest API endpoints to create new sessions and query session info.
+ *
+ * <br>
+ * <br>
+ *
  * created: 07.06.2024
  *
  * @author June L. Gschwantner
@@ -38,7 +43,7 @@ public class GameSessionController {
 
     @PostMapping("/game/session/new")
     private ResponseEntity<String> newEmployee(@RequestBody GameSessionConfig config) {
-        var configIssue = GameSessionController.checkConfig(config);
+        var configIssue = GameSessionController.validateConfig(config);
         if (configIssue.isPresent()) {
             return configIssue.get();
         }
@@ -49,7 +54,7 @@ public class GameSessionController {
         return ResponseEntity.ok(String.format("%06d", key));
     }
 
-    private static Optional<ResponseEntity<String>> checkConfig(GameSessionConfig config) {
+    private static Optional<ResponseEntity<String>> validateConfig(GameSessionConfig config) {
         var bSize = config.getBoardSize();
         var sSize = config.getInitialSnakeSize();
         var pCount = config.getPlayerCount();

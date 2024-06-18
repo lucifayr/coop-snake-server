@@ -16,7 +16,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(gateway, "/game/session/*").setAllowedOrigins("*");
-        registry.addHandler(gateway, "/game/session/view/*").setAllowedOrigins("*");
+        registry.addHandler(gateway, String.format("%s/*", GameSessionGateway.URL_PREFIX_SESSION_JOIN))
+                .setAllowedOrigins("*");
+        registry.addHandler(gateway, String.format("%s/*", GameSessionGateway.URL_PREFIX_SESSION_VIEW))
+                .setAllowedOrigins("*");
     }
 }

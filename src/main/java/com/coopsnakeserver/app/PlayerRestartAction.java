@@ -4,6 +4,12 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
+ * Content of a response message from a player after a game over. Should either
+ * led to a "confirm" or a "deny" restart.
+ *
+ * <br>
+ * <br>
+ *
  * created: 16.06.2024
  *
  * @author June L. Gschwantner

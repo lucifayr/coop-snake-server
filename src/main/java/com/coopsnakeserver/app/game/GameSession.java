@@ -20,6 +20,8 @@ import com.coopsnakeserver.app.GameBinaryMessage;
 import com.coopsnakeserver.app.PlayerRestartAction;
 import com.coopsnakeserver.app.PlayerSwipeInput;
 import com.coopsnakeserver.app.PlayerToken;
+import com.coopsnakeserver.app.debug.DebugFlag;
+import com.coopsnakeserver.app.debug.DebugMode;
 import com.coopsnakeserver.app.pojo.GameMessageType;
 import com.coopsnakeserver.app.pojo.Player;
 import com.coopsnakeserver.app.pojo.SessionInfo;
@@ -72,7 +74,8 @@ public class GameSession {
                 for (var loop : this.loops.values()) {
                     var gameOver = loop.checkGameOver();
 
-                    if (gameOver.isPresent()) {
+                    if (gameOver.isPresent() &&
+                            !DebugMode.instanceHasFlag(DebugFlag.PlaybackFrames)) {
                         this.gameState = GameSessionState.GameOver;
 
                         var gameOverMsg = new SessionInfo(SessionInfoType.GameOver, gameOver.get().intoBytes());
